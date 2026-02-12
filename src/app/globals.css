@@ -1,0 +1,12 @@
+
+:root {
+  --font-manrope: var(--font-manrope);
+  --weight-regular: 400;
+  --weight-bold: 700;
+}
+
+body {
+  margin: 0;
+  background-color: #F5F5F5;
+}
+
