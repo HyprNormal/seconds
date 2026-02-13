@@ -185,17 +185,24 @@ export default function Home() {
   const NAV_BUTTON_H = 48;
   const NAV_H = NAV_BUTTON_H + 18; // 66
 
-  // Header stack (match your v2 layout)
-  const SAFE = 62;
+  // Header geometry (safe-area aware)
+  const SAFE_TOP = "env(safe-area-inset-top)";
+  const SAFE_BREATH = 28; // replaces your old “62px” guess
   const LOGO_H = 48;
   const SEARCH_TOP = 24;
   const SEARCH_H = 48;
-  const HEADER_TOTAL = SAFE + LOGO_H + SEARCH_TOP + SEARCH_H;
+
+  const HEADER_TOTAL = `calc(${SAFE_TOP} + ${SAFE_BREATH + LOGO_H + SEARCH_TOP + SEARCH_H}px)`;
+
+  // Plate extension + fade (your request)
+  const PLATE_EXTEND = 24; // extend plate 24px below search
+  const PLATE_FADE = 12; // last 12px fades to transparent
+  const HEADER_PLATE_H = `calc(${HEADER_TOTAL} + ${PLATE_EXTEND}px)`;
 
   // Canonical hero render height (so crop stays seamless between layers)
-  const HERO_H = "calc(420px + env(safe-area-inset-top))";
+  const HERO_H = `calc(420px + ${SAFE_TOP})`;
 
-  // HERO treatment (shared by backdrop + header plate so it's seamless)
+  // HERO treatment (opaque image + overlays)
   const HERO_POS = "center top";
   const HERO_OPACITY = 1; // fully opaque so grid can’t bleed through
   const HERO_DARKEN = "rgba(13, 13, 13, 0.20)";
@@ -282,7 +289,7 @@ export default function Home() {
           borderRadius: 0,
         }}
       >
-        {/* Backdrop layer (FULL HERO RENDER at consistent size) */}
+        {/* Backdrop layer (canonical hero render) */}
         <div
           style={{
             position: "absolute",
@@ -295,7 +302,6 @@ export default function Home() {
             overflow: "hidden",
           }}
         >
-          {/* Hero render (canonical crop/scale) */}
           <div style={{ position: "absolute", inset: 0, height: HERO_H }}>
             <div
               style={{
@@ -320,7 +326,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* FULL-HEIGHT NATIVE SCROLLER (native momentum; swipes anywhere work) */}
+        {/* Full-height native scroller */}
         <div
           style={{
             position: "absolute",
@@ -334,10 +340,9 @@ export default function Home() {
             boxSizing: "border-box",
           }}
         >
-          {/* Spacer so content begins below header (v2 layout) */}
+          {/* Spacer below header */}
           <div style={{ height: HEADER_TOTAL }} />
 
-          {/* Grid content */}
           <div style={{ paddingLeft: 12, paddingRight: 12, boxSizing: "border-box" }}>
             <div style={gridStyle}>
               {films.map((film) => (
@@ -351,26 +356,37 @@ export default function Home() {
                 </div>
               ))}
             </div>
-
-            {/* debug overflow */}
             <div style={{ height: 400 }} />
           </div>
         </div>
 
-        {/* HEADER PLATE (window onto SAME hero render size) — seamless + opaque */}
+        {/* Header plate: window onto SAME hero render + soft fade at bottom */}
         <div
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
-            height: HEADER_TOTAL,
+            height: HEADER_PLATE_H, // extended by 24px
             zIndex: 15,
             pointerEvents: "none",
             overflow: "hidden",
+
+            // Fade only the plate (alpha) over its last 12px
+            WebkitMaskImage: `linear-gradient(
+              to bottom,
+              black 0px,
+              black calc(100% - ${PLATE_FADE}px),
+              transparent 100%
+            )`,
+            maskImage: `linear-gradient(
+              to bottom,
+              black 0px,
+              black calc(100% - ${PLATE_FADE}px),
+              transparent 100%
+            )`,
           }}
         >
-          {/* Same hero render height as backdrop so “cover” math matches */}
           <div style={{ position: "absolute", inset: 0, height: HERO_H }}>
             <div
               style={{
@@ -395,7 +411,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Header overlay — swipes pass through except input */}
+        {/* Header overlay (unchanged look) */}
         <div
           style={{
             position: "absolute",
@@ -409,7 +425,7 @@ export default function Home() {
             pointerEvents: "none",
           }}
         >
-          <div style={{ height: SAFE }} />
+          <div style={{ height: `calc(${SAFE_TOP} + ${SAFE_BREATH}px)` }} />
 
           <div
             style={{
@@ -449,7 +465,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Bottom nav overlays content */}
         <BottomNav bottomNavStyle={bottomNavStyle} />
       </div>
     </div>
