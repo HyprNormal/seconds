@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
  * IMPORTANT (so this actually works):
  * 1) Your SVGs must use currentColor (NOT hard-coded black/white).
  *    - icon-home-active.svg: already uses fill="currentColor" ✅
- *    - icon-home-default.svg: change fill="black" -> fill="currentColor"
+ *    - icon-home-default.svg: change fill="black" -> fill="currentColor" (you already shared this issue)
  *
  * 2) These imports assume SVGR is configured (SVGs import as React components).
  */
@@ -26,29 +26,22 @@ import SetActive from "@/icons/icon-setmenu-active.svg";
 import SettingsDefault from "@/icons/icon-settings-default.svg";
 import SettingsActive from "@/icons/icon-settings-active.svg";
 
-/** ---------------------------------------
- * Scale helper: keeps internal layout fixed,
- * but scales the whole frame down on small screens.
- * -------------------------------------- */
-function useFrameScale(baseWidth, baseHeight) {
-  const [scale, setScale] = useState(1);
+/* -----------------------------
+   Responsive helper
+   - Mobile: app fills viewport
+   - Desktop: app is fixed 420x874 centered on white canvas
+------------------------------ */
+function useIsMobile(breakpoint = 480) {
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const update = () => {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-
-      // Fit-to-viewport scale, but never scale up past 1.
-      const next = Math.min(vw / baseWidth, vh / baseHeight, 1);
-      setScale(next);
-    };
-
+    const update = () => setIsMobile(window.innerWidth <= breakpoint);
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
-  }, [baseWidth, baseHeight]);
+  }, [breakpoint]);
 
-  return scale;
+  return isMobile;
 }
 
 function Poster({ src }) {
@@ -90,6 +83,9 @@ function Poster({ src }) {
   );
 }
 
+/* -----------------------------
+   Bottom Nav (SVGR ICONS)
+------------------------------ */
 function BottomNav({ bottomNavStyle }) {
   const pathname = usePathname();
   const [hoveredKey, setHoveredKey] = useState(null);
@@ -197,11 +193,7 @@ function BottomNav({ bottomNavStyle }) {
 
           const isInteractiveHighlight = !isActive && (isHovering || isPressed);
 
-          const color = isActive
-            ? "#FFFFFF"
-            : isInteractiveHighlight
-            ? "#999999"
-            : "#444444";
+          const color = isActive ? "#FFFFFF" : isInteractiveHighlight ? "#999999" : "#444444";
 
           const Icon = isActive ? item.ActiveIcon : item.DefaultIcon;
 
@@ -239,7 +231,11 @@ function BottomNav({ bottomNavStyle }) {
   );
 }
 
+/* -----------------------------
+   Page
+------------------------------ */
 export default function Home() {
+  const isMobile = useIsMobile(480);
   const headerBackdropSrc = "/films/spirited-away/backdrop.webp";
 
   const films = [
@@ -292,181 +288,164 @@ export default function Home() {
     paddingLeft: 24,
     paddingRight: 24,
     paddingTop: 6,
-    height: 88,
+    paddingBottom: "env(safe-area-inset-bottom)",
+    height: "calc(88px + env(safe-area-inset-bottom))",
     background: "#0D0D0D",
     borderTop: "1px solid #444444",
     zIndex: 50,
     boxSizing: "border-box",
   };
 
-  // Your fixed “design frame”
-  const BASE_W = 420;
-  const BASE_H = 874;
-  const scale = useFrameScale(BASE_W, BASE_H);
-
   return (
-    // Stage: fills browser, centers frame, clips overflow (so no sideways scroll on iPhone)
+    // Stage (canvas)
     <div
       style={{
         width: "100vw",
-        height: "100vh",
-        background: "#FFFFFF",
+        height: "100dvh",
+        background: isMobile ? "#0D0D0D" : "#FFFFFF", // mobile black, desktop white
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
       }}
     >
-      {/* Scaled wrapper: scales DOWN on small viewports, never up */}
+      {/* App frame (responsive on mobile, fixed on desktop) */}
       <div
         style={{
-          width: BASE_W,
-          height: BASE_H,
-          transform: `scale(${scale})`,
-          transformOrigin: "center center",
+          width: isMobile ? "100vw" : 420,
+          height: isMobile ? "100dvh" : 874,
+          overflow: "hidden",
+          margin: isMobile ? 0 : "0 auto",
+          boxSizing: "border-box",
+          backgroundColor: "#0D0D0D",
+          display: "flex",
+          flexDirection: "column",
+          position: "relative",
+          borderRadius: isMobile ? 0 : 16, // optional: device feel on desktop
         }}
       >
-        {/* ---- YOUR ORIGINAL FRAME (unchanged) ---- */}
+        {/* Backdrop layer */}
         <div
           style={{
-            width: 420,
-            height: 874,
-            overflow: "hidden",
-            margin: "0 auto",
-            boxSizing: "border-box",
-            backgroundColor: "#0D0D0D",
-            display: "flex",
-            flexDirection: "column",
-            position: "relative",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: 386,
+            zIndex: 0,
+            pointerEvents: "none",
           }}
         >
-          {/* Backdrop layer */}
           <div
             style={{
               position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: 386,
-              zIndex: 0,
-              pointerEvents: "none",
+              inset: 0,
+              backgroundImage: `url(${headerBackdropSrc})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              opacity: 0.6,
             }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                backgroundImage: `url(${headerBackdropSrc})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                opacity: 0.6,
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                opacity: 0.9,
-                inset: 0,
-                background:
-                  "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
-              }}
-            />
-          </div>
-
-          {/* Foreground wrapper (padded content only) */}
+          />
           <div
             style={{
-              position: "relative",
-              zIndex: 1,
-              height: "100%",
+              position: "absolute",
+              opacity: 0.9,
+              inset: 0,
+              background: "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
+            }}
+          />
+        </div>
+
+        {/* Foreground wrapper (padded content only) */}
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1,
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            paddingLeft: 12,
+            paddingRight: 12,
+            boxSizing: "border-box",
+          }}
+        >
+          {/* iOS safe zone (responsive) */}
+          <div style={{ height: "env(safe-area-inset-top)" }} />
+          <div style={{ height: 20 }} />
+
+          {/* Header */}
+          <div
+            style={{
+              height: 48,
               display: "flex",
-              flexDirection: "column",
-              paddingLeft: 12,
-              paddingRight: 12,
-              boxSizing: "border-box",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            {/* iOS safe zone */}
-            <div style={{ height: 62 }} />
-
-            {/* Header */}
-            <div
-              style={{
-                height: 48,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <img
-                src="/logo.svg"
-                alt="Seconds"
-                style={{ height: 28, width: "auto" }}
-              />
-            </div>
-
-            {/* Search bar */}
-            <div style={{ paddingTop: 24, display: "flex", alignItems: "center" }}>
-              <input
-                type="text"
-                placeholder="Search films, dishes, ingredients"
-                style={{
-                  width: "100%",
-                  color: "#999999",
-                  paddingLeft: 16,
-                  paddingRight: 16,
-                  height: 48,
-                  borderRadius: 24,
-                  fontWeight: 500,
-                  fontSize: 14,
-                  fontFamily: "var(--font-manrope)",
-                  lineHeight: "1.4em",
-                  letterSpacing: "0em",
-                  userSelect: "none",
-                  border: "0",
-                  backgroundColor: "white",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-
-            {/* Scroll container */}
-            <div
-              style={{
-                flex: 1,
-                minHeight: 0,
-                overflowY: "auto",
-                overflowX: "hidden",
-                WebkitOverflowScrolling: "touch",
-                paddingBottom: 104,
-                boxSizing: "border-box",
-                maskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
-                WebkitMaskImage:
-                  "linear-gradient(to bottom, transparent 0px, black 24px)",
-              }}
-            >
-              <div style={gridStyle}>
-                {films.map((film) => (
-                  <div key={film.id} style={tileStyle}>
-                    <Poster src={film.poster} />
-                    <div style={stampsRowStyle}>
-                      {Array.from({ length: film.stamps }).map((_, j) => (
-                        <div key={j} style={stampStyle} />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* debug overflow */}
-              <div style={{ height: 400 }} />
-            </div>
+            <img src="/logo.svg" alt="Seconds" style={{ height: 28, width: "auto" }} />
           </div>
 
-          {/* Bottom nav overlays content */}
-          <BottomNav bottomNavStyle={bottomNavStyle} />
+          {/* Search bar */}
+          <div style={{ paddingTop: 24, display: "flex", alignItems: "center" }}>
+            <input
+              type="text"
+              placeholder="Search films, dishes, ingredients"
+              style={{
+                width: "100%",
+                color: "#999999",
+                paddingLeft: 16,
+                paddingRight: 16,
+                height: 48,
+                borderRadius: 24,
+                fontWeight: 500,
+                fontSize: 14,
+                fontFamily: "var(--font-manrope)",
+                lineHeight: "1.4em",
+                letterSpacing: "0em",
+                userSelect: "none",
+                border: "0",
+                backgroundColor: "white",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+
+          {/* Scroll container */}
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: "auto",
+              overflowX: "hidden",
+              WebkitOverflowScrolling: "touch",
+              // Account for nav height + safe-area bottom
+              paddingBottom: "calc(104px + env(safe-area-inset-bottom))",
+              boxSizing: "border-box",
+              maskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
+              WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
+            }}
+          >
+            <div style={gridStyle}>
+              {films.map((film) => (
+                <div key={film.id} style={tileStyle}>
+                  <Poster src={film.poster} />
+                  <div style={stampsRowStyle}>
+                    {Array.from({ length: film.stamps }).map((_, j) => (
+                      <div key={j} style={stampStyle} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* debug overflow */}
+            <div style={{ height: 400 }} />
+          </div>
         </div>
+
+        {/* Bottom nav overlays content */}
+        <BottomNav bottomNavStyle={bottomNavStyle} />
       </div>
     </div>
   );
