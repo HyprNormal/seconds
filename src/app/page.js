@@ -58,7 +58,6 @@ function Poster({ src }) {
         whileTap={{ scale: 1.05 }}
         transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
       />
-
       <div
         style={{
           position: "absolute",
@@ -182,17 +181,15 @@ export default function Home() {
   const isMobile = useIsMobile(480);
   const headerBackdropSrc = "/films/spirited-away/backdrop.webp";
 
-  // ✅ keep nav sizing amendment: 48 button + (6 top + 12 bottom) = 66
+  // ✅ keep nav sizing: 48 button + (6 top + 12 bottom) = 66
   const NAV_BUTTON_H = 48;
   const NAV_H = NAV_BUTTON_H + 18; // 66
 
-  // Header stack (matches your v2 look)
-  const SAFE = 62; // your v2 spacer height
+  // Header stack (match your v2 layout)
+  const SAFE = 62;
   const LOGO_H = 48;
   const SEARCH_TOP = 24;
   const SEARCH_H = 48;
-
-  // This is exactly where grid starts in v2
   const HEADER_TOTAL = SAFE + LOGO_H + SEARCH_TOP + SEARCH_H;
 
   const films = [
@@ -307,7 +304,7 @@ export default function Home() {
           />
         </div>
 
-        {/* FULL-HEIGHT NATIVE SCROLLER (this is the key for “real” iOS glide) */}
+        {/* FULL-HEIGHT NATIVE SCROLLER (native momentum; swipes anywhere work) */}
         <div
           style={{
             position: "absolute",
@@ -321,19 +318,11 @@ export default function Home() {
             boxSizing: "border-box",
           }}
         >
-          {/* Spacer so content starts below header (v2 look) */}
+          {/* Spacer so content begins below header (v2 layout) */}
           <div style={{ height: HEADER_TOTAL }} />
 
-          {/* Grid content + v2 fade at the top edge of the scroll region */}
-          <div
-            style={{
-              paddingLeft: 12,
-              paddingRight: 12,
-              boxSizing: "border-box",
-              maskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
-              WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
-            }}
-          >
+          {/* Grid content */}
+          <div style={{ paddingLeft: 12, paddingRight: 12, boxSizing: "border-box" }}>
             <div style={gridStyle}>
               {films.map((film) => (
                 <div key={film.id} style={tileStyle}>
@@ -352,7 +341,32 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Header overlay (v2 look) — allow swipes to pass through except the input */}
+        {/* HEADER PLATE (cropped hero image) — hides grid behind header */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: HEADER_TOTAL,
+            zIndex: 15, // above scroller (1), below UI (20)
+            pointerEvents: "none",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: `url(${headerBackdropSrc})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center top",
+              opacity: 0.6,
+            }}
+          />
+        </div>
+
+        {/* Header overlay — swipes pass through except input */}
         <div
           style={{
             position: "absolute",
@@ -363,7 +377,7 @@ export default function Home() {
             paddingLeft: 12,
             paddingRight: 12,
             boxSizing: "border-box",
-            pointerEvents: "none", // <-- key: header doesn't block scrolling gestures
+            pointerEvents: "none",
           }}
         >
           <div style={{ height: SAFE }} />
@@ -384,7 +398,7 @@ export default function Home() {
               type="text"
               placeholder="Search films, dishes, ingredients"
               style={{
-                pointerEvents: "auto", // <-- but search remains interactive
+                pointerEvents: "auto",
                 width: "100%",
                 color: "#999999",
                 paddingLeft: 16,
@@ -406,7 +420,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Bottom nav overlays */}
+        {/* Bottom nav overlays content */}
         <BottomNav bottomNavStyle={bottomNavStyle} />
       </div>
     </div>
