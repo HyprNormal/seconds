@@ -219,6 +219,13 @@ export default function Home() {
     { id: "delicious", poster: "/films/delicious/cover.webp", stamps: 4 },
     { id: "the-menu", poster: "/films/the-menu/cover.webp", stamps: 2 },
     { id: "babettes-feast", poster: "/films/babettes-feast/cover.webp", stamps: 4 },
+    { id: "chef", poster: "/films/chef/cover.webp", stamps: 3 },
+    { id: "burnt", poster: "/films/burnt/cover.webp", stamps: 2 },
+    { id: "big-night", poster: "/films/big-night/cover.webp", stamps: 4 },
+    { id: "chef", poster: "/films/the-taste-of-things/cover.webp", stamps: 5 },
+    { id: "burnt", poster: "/films/sideways/cover.webp", stamps: 2 },
+    { id: "big-night", poster: "/films/the-cook-the-thief/cover.webp", stamps: 3 },
+
   ];
 
   const tileStyle = { display: "flex", flexDirection: "column", gap: 12 };
@@ -356,7 +363,6 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            <div style={{ height: 400 }} />
           </div>
         </div>
 
