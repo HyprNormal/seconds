@@ -1,4 +1,4 @@
-// page v2.js
+// page v6.js
 "use client";
 
 import Link from "next/link";
@@ -17,6 +17,9 @@ import SetActive from "@/icons/icon-setmenu-active.svg";
 
 import SettingsDefault from "@/icons/icon-settings-default.svg";
 import SettingsActive from "@/icons/icon-settings-active.svg";
+
+import SearchIcon from "@/icons/icon-search.svg";
+import FilterIcon from "@/icons/icon-filter.svg";
 
 /* -----------------------------
    Responsive helper
@@ -179,6 +182,7 @@ function BottomNav({ bottomNavStyle }) {
 ------------------------------ */
 export default function Home() {
   const isMobile = useIsMobile(480);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const headerBackdropSrc = "/films/spirited-away/backdrop.webp";
 
   // ✅ keep nav sizing: 48 button + (6 top + 12 bottom) = 66
@@ -445,30 +449,88 @@ export default function Home() {
             <img src="/logo.svg" alt="Seconds" style={{ height: 28, width: "auto" }} />
           </div>
 
+          {/* Search */}
           <div style={{ paddingTop: SEARCH_TOP, display: "flex", alignItems: "center" }}>
-            <input
-              type="text"
-              placeholder="Search films, dishes, ingredients"
-              style={{
-                pointerEvents: "auto",
-                width: "100%",
-                color: "#999999",
-                paddingLeft: 16,
-                paddingRight: 16,
-                height: SEARCH_H,
-                borderRadius: 24,
-                fontWeight: 500,
-                fontSize: 14,
-                fontFamily: "var(--font-manrope)",
-                lineHeight: "1.4em",
-                letterSpacing: "0em",
-                userSelect: "none",
-                border: "0",
-                backgroundColor: "white",
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-            />
+            <div style={{ position: "relative", width: "100%", pointerEvents: "auto" }}>
+              {/* Left icon */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: 16,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 16,
+                  height: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  pointerEvents: "none",
+                  color: "#444444", // icon-search.svg
+                }}
+              >
+                <SearchIcon width={16} height={16} aria-hidden="true" focusable="false" style={{ display: "block" }} />
+              </div>
+
+              {/* Right icon */}
+              <div
+                style={{
+                  position: "absolute",
+                  right: 16,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 16,
+                  height: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  pointerEvents: "none",
+                  color: "#999999", // icon-filter.svg
+                }}
+              >
+                <FilterIcon width={16} height={16} aria-hidden="true" focusable="false" style={{ display: "block" }} />
+              </div>
+
+              <input
+                type="text"
+                placeholder={isSearchFocused ? "" : "Search films, dishes, ingredients"}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={(e) => {
+                  if (!e.target.value) setIsSearchFocused(false);
+                }}
+                className="secondsSearch"
+                style={{
+                  width: "100%",
+                  height: SEARCH_H,
+                  borderRadius: 24,
+                  border: "0",
+                  backgroundColor: "white",
+                  outline: "none",
+                  boxSizing: "border-box",
+
+                  // typed text
+                  color: "#444444",
+
+                  fontWeight: 500,
+                  fontSize: 16, // prevents iOS zoom
+                  fontFamily: "var(--font-manrope)",
+                  lineHeight: "1.4em",
+                  letterSpacing: "0em",
+
+                  // 16 (left edge) + 16 (icon) + 12 (gap)
+                  paddingLeft: 44,
+                  // 16 (right edge) + 16 (icon)
+                  paddingRight: 32,
+                }}
+              />
+
+              {/* Placeholder styling */}
+              <style jsx>{`
+                .secondsSearch::placeholder {
+                  color: #999999;
+                  opacity: 1;
+                }
+              `}</style>
+            </div>
           </div>
         </div>
 
