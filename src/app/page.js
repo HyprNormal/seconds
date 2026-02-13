@@ -4,13 +4,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * IMPORTANT (so this actually works):
  * 1) Your SVGs must use currentColor (NOT hard-coded black/white).
  *    - icon-home-active.svg: already uses fill="currentColor" ✅
- *    - icon-home-default.svg: change fill="black" -> fill="currentColor" (you already shared this issue)
+ *    - icon-home-default.svg: change fill="black" -> fill="currentColor"
  *
  * 2) These imports assume SVGR is configured (SVGs import as React components).
  */
@@ -25,6 +25,31 @@ import SetActive from "@/icons/icon-setmenu-active.svg";
 
 import SettingsDefault from "@/icons/icon-settings-default.svg";
 import SettingsActive from "@/icons/icon-settings-active.svg";
+
+/** ---------------------------------------
+ * Scale helper: keeps internal layout fixed,
+ * but scales the whole frame down on small screens.
+ * -------------------------------------- */
+function useFrameScale(baseWidth, baseHeight) {
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const update = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      // Fit-to-viewport scale, but never scale up past 1.
+      const next = Math.min(vw / baseWidth, vh / baseHeight, 1);
+      setScale(next);
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [baseWidth, baseHeight]);
+
+  return scale;
+}
 
 function Poster({ src }) {
   return (
@@ -65,14 +90,6 @@ function Poster({ src }) {
   );
 }
 
-/* -----------------------------
-   Bottom Nav (SVGR ICONS)
-   Spec implemented:
-   - Active: icon + label = white, uses *-active.svg (filled variant)
-   - Inactive: icon + label = #444444, uses *-default.svg (line variant)
-   - Hover/Pressed (inactive only): icon + label = #999999, still uses *-default.svg
-   - Transition: 180ms cubic-bezier(0.16, 1, 0.3, 1) on color
------------------------------- */
 function BottomNav({ bottomNavStyle }) {
   const pathname = usePathname();
   const [hoveredKey, setHoveredKey] = useState(null);
@@ -138,7 +155,6 @@ function BottomNav({ bottomNavStyle }) {
     boxSizing: "border-box",
   };
 
-  // NOTE: we set "color" on the Link so BOTH icon + label inherit it.
   const navItemStyle = {
     flex: 1,
     height: "100%",
@@ -150,7 +166,6 @@ function BottomNav({ bottomNavStyle }) {
     textDecoration: "none",
     WebkitTapHighlightColor: "transparent",
     paddingTop: 12,
-    // transition spec:
     transition: `color ${DURATION}ms ${EASE}`,
   };
 
@@ -177,19 +192,17 @@ function BottomNav({ bottomNavStyle }) {
         {NAV_ITEMS.map((item) => {
           const isActive = item.key === activeKey;
 
-          // hover for desktop + "pressed" for mobile
           const isHovering = item.key === hoveredKey;
           const isPressed = item.key === pressedKey;
 
-          // Hover/pressed state should NOT affect active items
           const isInteractiveHighlight = !isActive && (isHovering || isPressed);
 
-          // Color rules from your spec:
-          const color = isActive ? "#FFFFFF" : isInteractiveHighlight ? "#999999" : "#444444";
+          const color = isActive
+            ? "#FFFFFF"
+            : isInteractiveHighlight
+            ? "#999999"
+            : "#444444";
 
-          // Icon rules from your spec:
-          // - Active uses filled (*-active.svg)
-          // - Inactive ALWAYS uses line (*-default.svg), even on hover/pressed
           const Icon = isActive ? item.ActiveIcon : item.DefaultIcon;
 
           return (
@@ -199,12 +212,10 @@ function BottomNav({ bottomNavStyle }) {
               aria-current={isActive ? "page" : undefined}
               style={{
                 ...navItemStyle,
-                color, // drives icon + label via currentColor in SVGs
+                color,
               }}
-              // Hover (desktop)
               onMouseEnter={() => setHoveredKey(item.key)}
               onMouseLeave={() => setHoveredKey(null)}
-              // Pressed (mobile)
               onPointerDown={() => setPressedKey(item.key)}
               onPointerUp={() => setPressedKey(null)}
               onPointerCancel={() => setPressedKey(null)}
@@ -228,9 +239,6 @@ function BottomNav({ bottomNavStyle }) {
   );
 }
 
-/* -----------------------------
-   Page
------------------------------- */
 export default function Home() {
   const headerBackdropSrc = "/films/spirited-away/backdrop.webp";
 
@@ -291,142 +299,175 @@ export default function Home() {
     boxSizing: "border-box",
   };
 
+  // Your fixed “design frame”
+  const BASE_W = 420;
+  const BASE_H = 874;
+  const scale = useFrameScale(BASE_W, BASE_H);
+
   return (
+    // Stage: fills browser, centers frame, clips overflow (so no sideways scroll on iPhone)
     <div
       style={{
-        width: 420,
-        height: 874,
-        overflow: "hidden",
-        margin: "0 auto",
-        boxSizing: "border-box",
-        backgroundColor: "#0D0D0D",
+        width: "100vw",
+        height: "100vh",
+        background: "#FFFFFF",
         display: "flex",
-        flexDirection: "column",
-        position: "relative",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
       }}
     >
-      {/* Backdrop layer */}
+      {/* Scaled wrapper: scales DOWN on small viewports, never up */}
       <div
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: 386,
-          zIndex: 0,
-          pointerEvents: "none",
+          width: BASE_W,
+          height: BASE_H,
+          transform: `scale(${scale})`,
+          transformOrigin: "center center",
         }}
       >
+        {/* ---- YOUR ORIGINAL FRAME (unchanged) ---- */}
         <div
           style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: `url(${headerBackdropSrc})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            opacity: 0.6,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            opacity: 0.9,
-            inset: 0,
-            background: "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
-          }}
-        />
-      </div>
-
-      {/* Foreground wrapper (padded content only) */}
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          paddingLeft: 12,
-          paddingRight: 12,
-          boxSizing: "border-box",
-        }}
-      >
-        {/* iOS safe zone */}
-        <div style={{ height: 62 }} />
-
-        {/* Header */}
-        <div
-          style={{
-            height: 48,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <img src="/logo.svg" alt="Seconds" style={{ height: 28, width: "auto" }} />
-        </div>
-
-        {/* Search bar */}
-        <div style={{ paddingTop: 24, display: "flex", alignItems: "center" }}>
-          <input
-            type="text"
-            placeholder="Search films, dishes, ingredients"
-            style={{
-              width: "100%",
-              color: "#999999",
-              paddingLeft: 16,
-              paddingRight: 16,
-              height: 48,
-              borderRadius: 24,
-              fontWeight: 500,
-              fontSize: 14,
-              fontFamily: "var(--font-manrope)",
-              lineHeight: "1.4em",
-              letterSpacing: "0em",
-              
-              userSelect: "none",
-              border: "0",
-              backgroundColor: "white",
-              fontSize: 14,
-              outline: "none",
-              boxSizing: "border-box",
-            }}
-          />
-        </div>
-
-        {/* Scroll container */}
-        <div
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: "auto",
-            overflowX: "hidden",
-            WebkitOverflowScrolling: "touch",
-            paddingBottom: 104,
+            width: 420,
+            height: 874,
+            overflow: "hidden",
+            margin: "0 auto",
             boxSizing: "border-box",
-            maskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
-            WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
+            backgroundColor: "#0D0D0D",
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
           }}
         >
-          <div style={gridStyle}>
-            {films.map((film) => (
-              <div key={film.id} style={tileStyle}>
-                <Poster src={film.poster} />
-                <div style={stampsRowStyle}>
-                  {Array.from({ length: film.stamps }).map((_, j) => (
-                    <div key={j} style={stampStyle} />
-                  ))}
-                </div>
-              </div>
-            ))}
+          {/* Backdrop layer */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: 386,
+              zIndex: 0,
+              pointerEvents: "none",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                backgroundImage: `url(${headerBackdropSrc})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                opacity: 0.6,
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                opacity: 0.9,
+                inset: 0,
+                background:
+                  "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
+              }}
+            />
           </div>
 
-          {/* debug overflow */}
-          <div style={{ height: 400 }} />
+          {/* Foreground wrapper (padded content only) */}
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              paddingLeft: 12,
+              paddingRight: 12,
+              boxSizing: "border-box",
+            }}
+          >
+            {/* iOS safe zone */}
+            <div style={{ height: 62 }} />
+
+            {/* Header */}
+            <div
+              style={{
+                height: 48,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <img
+                src="/logo.svg"
+                alt="Seconds"
+                style={{ height: 28, width: "auto" }}
+              />
+            </div>
+
+            {/* Search bar */}
+            <div style={{ paddingTop: 24, display: "flex", alignItems: "center" }}>
+              <input
+                type="text"
+                placeholder="Search films, dishes, ingredients"
+                style={{
+                  width: "100%",
+                  color: "#999999",
+                  paddingLeft: 16,
+                  paddingRight: 16,
+                  height: 48,
+                  borderRadius: 24,
+                  fontWeight: 500,
+                  fontSize: 14,
+                  fontFamily: "var(--font-manrope)",
+                  lineHeight: "1.4em",
+                  letterSpacing: "0em",
+                  userSelect: "none",
+                  border: "0",
+                  backgroundColor: "white",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+
+            {/* Scroll container */}
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: "auto",
+                overflowX: "hidden",
+                WebkitOverflowScrolling: "touch",
+                paddingBottom: 104,
+                boxSizing: "border-box",
+                maskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
+                WebkitMaskImage:
+                  "linear-gradient(to bottom, transparent 0px, black 24px)",
+              }}
+            >
+              <div style={gridStyle}>
+                {films.map((film) => (
+                  <div key={film.id} style={tileStyle}>
+                    <Poster src={film.poster} />
+                    <div style={stampsRowStyle}>
+                      {Array.from({ length: film.stamps }).map((_, j) => (
+                        <div key={j} style={stampStyle} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* debug overflow */}
+              <div style={{ height: 400 }} />
+            </div>
+          </div>
+
+          {/* Bottom nav overlays content */}
+          <BottomNav bottomNavStyle={bottomNavStyle} />
         </div>
       </div>
-
-      {/* Bottom nav overlays content */}
-      <BottomNav bottomNavStyle={bottomNavStyle} />
     </div>
   );
 }
