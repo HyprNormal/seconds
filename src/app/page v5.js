@@ -6,6 +6,10 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
+/**
+ * IMPORTANT (so this actually works):
+ * 1) Your SVGs must use currentColor (NOT hard-coded black/white).
+ */
 import HomeDefault from "@/icons/icon-home-default.svg";
 import HomeActive from "@/icons/icon-home-active.svg";
 
@@ -20,8 +24,6 @@ import SettingsActive from "@/icons/icon-settings-active.svg";
 
 /* -----------------------------
    Responsive helper
-   - Mobile: app fills viewport
-   - Desktop: app is fixed 420x874 centered on white canvas
 ------------------------------ */
 function useIsMobile(breakpoint = 480) {
   const [isMobile, setIsMobile] = useState(false);
@@ -78,7 +80,7 @@ function Poster({ src }) {
 /* -----------------------------
    Bottom Nav (SVGR ICONS)
 ------------------------------ */
-function BottomNav({ bottomNavStyle, navButtonHeight = 48 }) {
+function BottomNav({ bottomNavStyle }) {
   const pathname = usePathname();
   const [hoveredKey, setHoveredKey] = useState(null);
   const [pressedKey, setPressedKey] = useState(null);
@@ -143,9 +145,10 @@ function BottomNav({ bottomNavStyle, navButtonHeight = 48 }) {
     boxSizing: "border-box",
   };
 
+  // NOTE: color is on Link so icon + label inherit it (via currentColor SVG)
   const navItemStyle = {
     flex: 1,
-    height: navButtonHeight, // 48
+    height: 48, // button container height (kept)
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -178,11 +181,14 @@ function BottomNav({ bottomNavStyle, navButtonHeight = 48 }) {
       <div style={navInnerStyle}>
         {NAV_ITEMS.map((item) => {
           const isActive = item.key === activeKey;
+
           const isHovering = item.key === hoveredKey;
           const isPressed = item.key === pressedKey;
+
           const isInteractiveHighlight = !isActive && (isHovering || isPressed);
 
           const color = isActive ? "#FFFFFF" : isInteractiveHighlight ? "#999999" : "#444444";
+
           const Icon = isActive ? item.ActiveIcon : item.DefaultIcon;
 
           return (
@@ -222,9 +228,9 @@ export default function Home() {
   const isMobile = useIsMobile(480);
   const headerBackdropSrc = "/films/spirited-away/backdrop.webp";
 
-  // Nav sizing system (kept):
+  // ✅ keep nav sizing amendment: paddingTop 6 + paddingBottom 12 = 18 => 48 + 18 = 66
   const NAV_BUTTON_H = 48;
-  const NAV_H = NAV_BUTTON_H + 18; // paddingTop 6 + paddingBottom 12 = 18 => 66
+  const NAV_H = NAV_BUTTON_H + 18; // 66
 
   const films = [
     { id: "tampopo", poster: "/films/tampopo/cover.webp", stamps: 5 },
@@ -238,11 +244,7 @@ export default function Home() {
     { id: "babettes-feast", poster: "/films/babettes-feast/cover.webp", stamps: 4 },
   ];
 
-  const tileStyle = {
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-  };
+  const tileStyle = { display: "flex", flexDirection: "column", gap: 12 };
 
   const stampsRowStyle = {
     height: 16,
@@ -268,6 +270,7 @@ export default function Home() {
     rowGap: 24,
   };
 
+  // ✅ keep nav style amendment (paddingBottom 12)
   const bottomNavStyle = {
     position: "absolute",
     left: 0,
@@ -285,7 +288,7 @@ export default function Home() {
   };
 
   return (
-    // Stage (canvas)
+    // Stage (canvas) — ✅ keep mobile black / desktop white
     <div
       style={{
         width: "100vw",
@@ -312,7 +315,7 @@ export default function Home() {
           borderRadius: 0,
         }}
       >
-        {/* Backdrop layer */}
+        {/* Backdrop layer (unchanged from your v2 structure) */}
         <div
           style={{
             position: "absolute",
@@ -337,86 +340,79 @@ export default function Home() {
           <div
             style={{
               position: "absolute",
-              inset: 0,
               opacity: 0.9,
+              inset: 0,
               background: "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
             }}
           />
         </div>
 
-        {/* SINGLE SCROLLER: header + search + grid all inside */}
+        {/* Foreground wrapper (v2 layout: header + search outside scroll) */}
         <div
           style={{
             position: "relative",
             zIndex: 1,
-            flex: 1,
-            minHeight: 0,
-            overflowY: "auto",
-            overflowX: "hidden",
-            WebkitOverflowScrolling: "touch",
-            overscrollBehavior: "contain",
-            touchAction: "pan-y",
-            paddingBottom: NAV_H + 16, // prevent grid hiding under nav
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            paddingLeft: 12,
+            paddingRight: 12,
             boxSizing: "border-box",
           }}
         >
-          {/* Sticky header block (NO gradient plate, NO blur) */}
+          {/* iOS safe zone spacer — reverted to v2 (no overlays, no gradients) */}
+          <div style={{ height: 62 }} />
+
+          {/* Header */}
           <div
             style={{
-              position: "sticky",
-              top: 0,
-              zIndex: 2,
-              paddingLeft: 12,
-              paddingRight: 12,
-              paddingTop: "calc(env(safe-area-inset-top) + 28px)",
-              paddingBottom: 16,
+              height: 48,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            {/* Header */}
-            <div
-              style={{
-                height: 48,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <img src="/logo.svg" alt="Seconds" style={{ height: 28, width: "auto" }} />
-            </div>
-
-            {/* Search */}
-            <div style={{ paddingTop: 24, display: "flex", alignItems: "center" }}>
-              <input
-                type="text"
-                placeholder="Search films, dishes, ingredients"
-                style={{
-                  width: "100%",
-                  color: "#999999",
-                  paddingLeft: 16,
-                  paddingRight: 16,
-                  height: 48,
-                  borderRadius: 24,
-                  fontWeight: 500,
-                  fontSize: 14,
-                  fontFamily: "var(--font-manrope)",
-                  lineHeight: "1.4em",
-                  letterSpacing: "0em",
-                  userSelect: "none",
-                  border: "0",
-                  backgroundColor: "white",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
+            <img src="/logo.svg" alt="Seconds" style={{ height: 28, width: "auto" }} />
           </div>
 
-          {/* Scroll content with TOP FADE MASK (grid disappears beneath search) */}
+          {/* Search bar — reverted (no added gradients) */}
+          <div style={{ paddingTop: 24, display: "flex", alignItems: "center" }}>
+            <input
+              type="text"
+              placeholder="Search films, dishes, ingredients"
+              style={{
+                width: "100%",
+                color: "#999999",
+                paddingLeft: 16,
+                paddingRight: 16,
+                height: 48,
+                borderRadius: 24,
+                fontWeight: 500,
+                fontSize: 14,
+                fontFamily: "var(--font-manrope)",
+                lineHeight: "1.4em",
+                letterSpacing: "0em",
+                userSelect: "none",
+                border: "0",
+                backgroundColor: "white",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+
+          {/* Scroll container (v2) */}
           <div
             style={{
-              paddingLeft: 12,
-              paddingRight: 12,
+              flex: 1,
+              minHeight: 0,
+              overflowY: "auto",
+              overflowX: "hidden",
+              WebkitOverflowScrolling: "touch",
+              paddingBottom: NAV_H + 16, // ✅ updated to match nav (66 + 16 = 82)
               boxSizing: "border-box",
+
+              // This is the v2 fade behaviour you had (no extra gradients added elsewhere)
               maskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
               WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
             }}
@@ -439,8 +435,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Bottom nav overlays everything */}
-        <BottomNav bottomNavStyle={bottomNavStyle} navButtonHeight={NAV_BUTTON_H} />
+        {/* Bottom nav overlays content */}
+        <BottomNav bottomNavStyle={bottomNavStyle} />
       </div>
     </div>
   );

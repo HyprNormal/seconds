@@ -357,19 +357,27 @@ export default function Home() {
             overscrollBehavior: "contain",
             touchAction: "pan-y",
             paddingBottom: NAV_H + 16, // prevent grid hiding under nav
-            boxSizing: "border-box",
           }}
         >
-          {/* Sticky header block (NO gradient plate, NO blur) */}
+          {/* Sticky header block */}
           <div
             style={{
               position: "sticky",
               top: 0,
               zIndex: 2,
+
+              // same horizontal padding system as before
               paddingLeft: 12,
               paddingRight: 12,
+
+              // “safe zone” + breathing room
               paddingTop: "calc(env(safe-area-inset-top) + 28px)",
               paddingBottom: 16,
+
+              // subtle plate so it feels intentional while scrolling
+              background: "linear-gradient(to bottom, rgba(13,13,13,0.92) 0%, rgba(13,13,13,0.70) 65%, rgba(13,13,13,0) 100%)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
             }}
           >
             {/* Header */}
@@ -411,16 +419,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Scroll content with TOP FADE MASK (grid disappears beneath search) */}
-          <div
-            style={{
-              paddingLeft: 12,
-              paddingRight: 12,
-              boxSizing: "border-box",
-              maskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
-              WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
-            }}
-          >
+          {/* Scroll content */}
+          <div style={{ paddingLeft: 12, paddingRight: 12, boxSizing: "border-box" }}>
             <div style={gridStyle}>
               {films.map((film) => (
                 <div key={film.id} style={tileStyle}>
