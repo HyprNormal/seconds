@@ -145,10 +145,9 @@ function BottomNav({ bottomNavStyle }) {
     boxSizing: "border-box",
   };
 
-  // color lives on the Link, so icon + label inherit it via currentColor SVG
   const navItemStyle = {
     flex: 1,
-    height: 48, // button container height
+    height: 48,
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -181,14 +180,11 @@ function BottomNav({ bottomNavStyle }) {
       <div style={navInnerStyle}>
         {NAV_ITEMS.map((item) => {
           const isActive = item.key === activeKey;
-
           const isHovering = item.key === hoveredKey;
           const isPressed = item.key === pressedKey;
-
           const isInteractiveHighlight = !isActive && (isHovering || isPressed);
 
           const color = isActive ? "#FFFFFF" : isInteractiveHighlight ? "#999999" : "#444444";
-
           const Icon = isActive ? item.ActiveIcon : item.DefaultIcon;
 
           return (
@@ -204,13 +200,7 @@ function BottomNav({ bottomNavStyle }) {
               onPointerCancel={() => setPressedKey(null)}
             >
               <div style={iconWrapStyle}>
-                <Icon
-                  width={item.width}
-                  height={item.height}
-                  aria-hidden="true"
-                  focusable="false"
-                  style={{ display: "block" }}
-                />
+                <Icon width={item.width} height={item.height} aria-hidden="true" focusable="false" style={{ display: "block" }} />
               </div>
               <div style={navLabelStyle}>{item.label}</div>
             </Link>
@@ -270,13 +260,12 @@ export default function Home() {
     rowGap: 24,
   };
 
-  // ✅ keep nav style amendment (paddingBottom 12)
   const bottomNavStyle = {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    height: NAV_H, // 66
+    height: NAV_H,
     background: "#0D0D0D",
     borderTop: "1px solid #444444",
     zIndex: 50,
@@ -287,11 +276,8 @@ export default function Home() {
     paddingBottom: 12,
   };
 
-  /* -----------------------------
-     Scroll forwarding + momentum
-     - Swipe anywhere (except interactive controls) scrolls the grid scroller
-     - Adds inertia so it doesn't stop dead
-  ------------------------------ */
+  // --- scroll forwarding + momentum (native listeners)
+  const frameRef = useRef(null);
   const scrollerRef = useRef(null);
 
   const gestureRef = useRef({
@@ -301,12 +287,12 @@ export default function Home() {
     lastY: 0,
     locked: null, // "y" | "x" | null
     lastTime: 0,
-    velocity: 0, // px per ms (finger space)
+    velocity: 0, // px/ms (finger space)
   });
 
   const momentumRef = useRef({
     raf: null,
-    velocity: 0, // px per ms
+    velocity: 0, // px/ms
   });
 
   function isInteractiveTarget(target) {
@@ -333,10 +319,10 @@ export default function Home() {
 
     stopMomentum();
 
-    // Tune knobs
-    const FRICTION = 0.92; // closer to 1 = longer glide
-    const MIN_V = 0.02; // px/ms, below this we stop
-    const MAX_STEP = 64; // px/frame clamp to avoid jumps
+    // tuned a bit “more iOS”
+    const FRICTION = 0.94; // longer glide
+    const MIN_V = 0.015; // stop threshold
+    const MAX_STEP = 72;
 
     let last = performance.now();
     let v = momentumRef.current.velocity;
@@ -347,17 +333,15 @@ export default function Home() {
       last = now;
 
       const step = clamp(v * dt, -MAX_STEP, MAX_STEP);
-
       const prevTop = scroller.scrollTop;
-      scroller.scrollTop -= step; // same sign convention as touchmove
+      scroller.scrollTop -= step;
 
-      // If we hit bounds (no movement), stop
+      // hit bounds → stop
       if (scroller.scrollTop === prevTop) {
         stopMomentum();
         return;
       }
 
-      // decay velocity
       v *= Math.pow(FRICTION, dt / 16.67);
 
       if (Math.abs(v) < MIN_V) {
@@ -372,90 +356,96 @@ export default function Home() {
     momentumRef.current.raf = requestAnimationFrame(tick);
   }
 
-  const onTouchStart = (e) => {
-    if (!isMobile) return;
-    if (isInteractiveTarget(e.target)) return;
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
 
-    stopMomentum();
+    const onStart = (e) => {
+      if (!isMobile) return;
+      if (isInteractiveTarget(e.target)) return;
 
-    const t = e.touches?.[0];
-    if (!t) return;
+      stopMomentum();
 
-    const now = performance.now();
-    gestureRef.current = {
-      active: true,
-      startX: t.clientX,
-      startY: t.clientY,
-      lastY: t.clientY,
-      locked: null,
-      lastTime: now,
-      velocity: 0,
+      const t = e.touches?.[0];
+      if (!t) return;
+
+      const now = performance.now();
+      gestureRef.current = {
+        active: true,
+        startX: t.clientX,
+        startY: t.clientY,
+        lastY: t.clientY,
+        locked: null,
+        lastTime: now,
+        velocity: 0,
+      };
     };
-  };
 
-  const onTouchMove = (e) => {
-    if (!isMobile) return;
-    if (!gestureRef.current.active) return;
-    if (isInteractiveTarget(e.target)) return;
+    const onMove = (e) => {
+      if (!isMobile) return;
+      if (!gestureRef.current.active) return;
+      if (isInteractiveTarget(e.target)) return;
 
-    const scroller = scrollerRef.current;
-    const t = e.touches?.[0];
-    if (!scroller || !t) return;
+      const scroller = scrollerRef.current;
+      const t = e.touches?.[0];
+      if (!scroller || !t) return;
 
-    const now = performance.now();
+      const now = performance.now();
 
-    const dx = t.clientX - gestureRef.current.startX;
-    const dy = t.clientY - gestureRef.current.startY;
+      const dx = t.clientX - gestureRef.current.startX;
+      const dy = t.clientY - gestureRef.current.startY;
 
-    // lock direction after threshold
-    if (!gestureRef.current.locked) {
-      const ax = Math.abs(dx);
-      const ay = Math.abs(dy);
-      if (ax < 6 && ay < 6) return;
-      gestureRef.current.locked = ay >= ax ? "y" : "x";
-    }
+      if (!gestureRef.current.locked) {
+        const ax = Math.abs(dx);
+        const ay = Math.abs(dy);
+        if (ax < 6 && ay < 6) return;
+        gestureRef.current.locked = ay >= ax ? "y" : "x";
+      }
 
-    if (gestureRef.current.locked !== "y") return;
+      if (gestureRef.current.locked !== "y") return;
 
-    // Prevent iOS body rubber-band / pull-to-refresh
-    e.preventDefault();
+      // critical: stop body rubber-band / pull-to-refresh
+      e.preventDefault();
 
-    const deltaY = t.clientY - gestureRef.current.lastY;
-    const dt = now - gestureRef.current.lastTime || 16.67;
+      const deltaY = t.clientY - gestureRef.current.lastY;
+      const dt = now - gestureRef.current.lastTime || 16.67;
 
-    // Move scroller opposite finger movement
-    scroller.scrollTop -= deltaY;
+      scroller.scrollTop -= deltaY;
 
-    // velocity (px/ms). Smooth to avoid jitter.
-    const instantV = deltaY / dt;
-    gestureRef.current.velocity = gestureRef.current.velocity * 0.8 + instantV * 0.2;
+      const instantV = deltaY / dt;
+      gestureRef.current.velocity = gestureRef.current.velocity * 0.8 + instantV * 0.2;
 
-    gestureRef.current.lastY = t.clientY;
-    gestureRef.current.lastTime = now;
-  };
+      gestureRef.current.lastY = t.clientY;
+      gestureRef.current.lastTime = now;
+    };
 
-  const onTouchEnd = () => {
-    if (!gestureRef.current.active) return;
+    const onEnd = () => {
+      if (!gestureRef.current.active) return;
 
-    gestureRef.current.active = false;
+      gestureRef.current.active = false;
+      gestureRef.current.locked = null;
 
-    // Carry momentum in same "finger space" direction
-    momentumRef.current.velocity = gestureRef.current.velocity;
+      momentumRef.current.velocity = gestureRef.current.velocity;
 
-    // Only start if there was meaningful movement
-    if (Math.abs(momentumRef.current.velocity) > 0.05) startMomentum();
+      if (Math.abs(momentumRef.current.velocity) > 0.03) startMomentum();
+    };
 
-    gestureRef.current.locked = null;
-  };
+    const opts = { passive: false };
 
-  const onTouchCancel = () => {
-    gestureRef.current.active = false;
-    gestureRef.current.locked = null;
-    stopMomentum();
-  };
+    frame.addEventListener("touchstart", onStart, opts);
+    frame.addEventListener("touchmove", onMove, opts);
+    frame.addEventListener("touchend", onEnd, opts);
+    frame.addEventListener("touchcancel", onEnd, opts);
+
+    return () => {
+      frame.removeEventListener("touchstart", onStart, opts);
+      frame.removeEventListener("touchmove", onMove, opts);
+      frame.removeEventListener("touchend", onEnd, opts);
+      frame.removeEventListener("touchcancel", onEnd, opts);
+    };
+  }, [isMobile]);
 
   return (
-    // Stage (canvas) — mobile black / desktop white
     <div
       style={{
         width: "100vw",
@@ -467,13 +457,8 @@ export default function Home() {
         overflow: "hidden",
       }}
     >
-      {/* App frame */}
       <div
-        // capture swipe-anywhere gestures (mobile only logic inside handlers)
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onTouchCancel={onTouchCancel}
+        ref={frameRef}
         style={{
           width: isMobile ? "100vw" : 420,
           height: isMobile ? "100dvh" : 874,
@@ -583,7 +568,7 @@ export default function Home() {
               overflowY: "auto",
               overflowX: "hidden",
               WebkitOverflowScrolling: "touch",
-              paddingBottom: NAV_H + 16, // 66 + 16 = 82
+              paddingBottom: NAV_H + 16, // 82
               boxSizing: "border-box",
               maskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
               WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
