@@ -192,6 +192,13 @@ export default function Home() {
   const SEARCH_H = 48;
   const HEADER_TOTAL = SAFE + LOGO_H + SEARCH_TOP + SEARCH_H;
 
+  // HERO treatment (shared by backdrop + header plate so it's seamless)
+  const HERO_POS = "center top";
+  const HERO_OPACITY = 1; // IMPORTANT: fully opaque so grid can’t bleed through
+  const HERO_DARKEN = "rgba(13, 13, 13, 0.20)"; // overall knockback
+  const HERO_TINT = "rgba(10, 40, 110, 0.18)"; // your “colour filter” (tweak as needed)
+  const HERO_GRADIENT_OPACITY = 0.9; // keep your existing fade-to-bg (optional but must match in both layers)
+
   const films = [
     { id: "tampopo", poster: "/films/tampopo/cover.webp", stamps: 5 },
     { id: "delicetessen", poster: "/films/delicetessen/cover.webp", stamps: 3 },
@@ -272,7 +279,7 @@ export default function Home() {
           borderRadius: 0,
         }}
       >
-        {/* Backdrop layer */}
+        {/* Backdrop layer (FULL HERO, fully opaque + filters) */}
         <div
           style={{
             position: "absolute",
@@ -284,21 +291,28 @@ export default function Home() {
             pointerEvents: "none",
           }}
         >
+          {/* Base hero */}
           <div
             style={{
               position: "absolute",
               inset: 0,
               backgroundImage: `url(${headerBackdropSrc})`,
               backgroundSize: "cover",
-              backgroundPosition: "center top",
-              opacity: 0.6,
+              backgroundPosition: HERO_POS,
+              opacity: HERO_OPACITY,
             }}
           />
+
+          {/* Filters (do the “knockback” via overlays, not image opacity) */}
+          <div style={{ position: "absolute", inset: 0, background: HERO_DARKEN }} />
+          <div style={{ position: "absolute", inset: 0, background: HERO_TINT }} />
+
+          {/* Keep your existing fade into the page bg (must match header plate) */}
           <div
             style={{
               position: "absolute",
-              opacity: 0.9,
               inset: 0,
+              opacity: HERO_GRADIENT_OPACITY,
               background: "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
             }}
           />
@@ -341,7 +355,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* HEADER PLATE (cropped hero image) — hides grid behind header */}
+        {/* HEADER PLATE (CROPPED HERO CLONE) — seamless + fully opaque */}
         <div
           style={{
             position: "absolute",
@@ -354,14 +368,29 @@ export default function Home() {
             overflow: "hidden",
           }}
         >
+          {/* Base hero */}
           <div
             style={{
               position: "absolute",
               inset: 0,
               backgroundImage: `url(${headerBackdropSrc})`,
               backgroundSize: "cover",
-              backgroundPosition: "center top",
-              opacity: 0.6,
+              backgroundPosition: HERO_POS,
+              opacity: HERO_OPACITY,
+            }}
+          />
+
+          {/* Same filters as backdrop */}
+          <div style={{ position: "absolute", inset: 0, background: HERO_DARKEN }} />
+          <div style={{ position: "absolute", inset: 0, background: HERO_TINT }} />
+
+          {/* Same gradient as backdrop (must match for seamlessness) */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: HERO_GRADIENT_OPACITY,
+              background: "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
             }}
           />
         </div>
