@@ -86,7 +86,7 @@ function Poster({ src }) {
 /* -----------------------------
    Bottom Nav (SVGR ICONS)
 ------------------------------ */
-function BottomNav({ bottomNavStyle }) {
+function BottomNav({ bottomNavStyle, navButtonHeight = 48 }) {
   const pathname = usePathname();
   const [hoveredKey, setHoveredKey] = useState(null);
   const [pressedKey, setPressedKey] = useState(null);
@@ -151,17 +151,17 @@ function BottomNav({ bottomNavStyle }) {
     boxSizing: "border-box",
   };
 
+  // NOTE: we set "color" on the Link so BOTH icon + label inherit it.
   const navItemStyle = {
     flex: 1,
-    height: "100%",
+    height: navButtonHeight, // <-- exact button container height
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "center",
     gap: 6,
     textDecoration: "none",
     WebkitTapHighlightColor: "transparent",
-    paddingTop: 12,
     transition: `color ${DURATION}ms ${EASE}`,
   };
 
@@ -238,6 +238,10 @@ export default function Home() {
   const isMobile = useIsMobile(480);
   const headerBackdropSrc = "/films/spirited-away/backdrop.webp";
 
+  // Nav sizing system:
+  const NAV_BUTTON_H = 48;
+  const NAV_H = NAV_BUTTON_H + 12; // 6 top + 6 bottom = 60
+
   const films = [
     { id: "tampopo", poster: "/films/tampopo/cover.webp", stamps: 5 },
     { id: "delicetessen", poster: "/films/delicetessen/cover.webp", stamps: 3 },
@@ -285,15 +289,15 @@ export default function Home() {
     left: 0,
     right: 0,
     bottom: 0,
-    paddingLeft: 24,
-    paddingRight: 24,
-    paddingTop: 6,
-    paddingBottom: "env(safe-area-inset-bottom)",
-    height: "calc(88px + env(safe-area-inset-bottom))",
+    height: NAV_H, // <-- 60
     background: "#0D0D0D",
     borderTop: "1px solid #444444",
     zIndex: 50,
     boxSizing: "border-box",
+    paddingLeft: 24,
+    paddingRight: 24,
+    paddingTop: 6,
+    paddingBottom: 6,
   };
 
   return (
@@ -321,7 +325,7 @@ export default function Home() {
           display: "flex",
           flexDirection: "column",
           position: "relative",
-          borderRadius: 0, // keep exactly as before on desktop too
+          borderRadius: 0,
         }}
       >
         {/* Backdrop layer */}
@@ -416,8 +420,8 @@ export default function Home() {
               overflowY: "auto",
               overflowX: "hidden",
               WebkitOverflowScrolling: "touch",
-              // Account for nav height + safe-area bottom
-              paddingBottom: "calc(104px + env(safe-area-inset-bottom))",
+              // Nav height + 16 buffer
+              paddingBottom: NAV_H + 16, // <-- 76
               boxSizing: "border-box",
               maskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
               WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
@@ -442,7 +446,10 @@ export default function Home() {
         </div>
 
         {/* Bottom nav overlays content */}
-        <BottomNav bottomNavStyle={bottomNavStyle} />
+        <BottomNav
+          bottomNavStyle={bottomNavStyle}
+          navButtonHeight={NAV_BUTTON_H}
+        />
       </div>
     </div>
   );
