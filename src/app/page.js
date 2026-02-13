@@ -225,6 +225,7 @@ export default function Home() {
     { id: "chef", poster: "/films/the-taste-of-things/cover.webp", stamps: 5 },
     { id: "burnt", poster: "/films/sideways/cover.webp", stamps: 2 },
     { id: "big-night", poster: "/films/the-cook-the-thief/cover.webp", stamps: 3 },
+    { id: "big-night", poster: "/films/spirited-away/cover.webp", stamps: 3 },
 
   ];
 
