@@ -151,10 +151,9 @@ function BottomNav({ bottomNavStyle, navButtonHeight = 48 }) {
     boxSizing: "border-box",
   };
 
-  // NOTE: we set "color" on the Link so BOTH icon + label inherit it.
   const navItemStyle = {
     flex: 1,
-    height: navButtonHeight, // <-- exact button container height
+    height: navButtonHeight, // exact button container height
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -289,7 +288,7 @@ export default function Home() {
     left: 0,
     right: 0,
     bottom: 0,
-    height: NAV_H, // <-- 60
+    height: NAV_H, // 66
     background: "#0D0D0D",
     borderTop: "1px solid #444444",
     zIndex: 50,
@@ -297,7 +296,7 @@ export default function Home() {
     paddingLeft: 24,
     paddingRight: 24,
     paddingTop: 6,
-    paddingBottom: 6,
+    paddingBottom: 12,
   };
 
   return (
@@ -335,21 +334,38 @@ export default function Home() {
             top: 0,
             left: 0,
             width: "100%",
-            height: "calc(386px + env(safe-area-inset-top))",
+            // slight bump in backdrop height to suit the masthead
+            height: "calc(420px + env(safe-area-inset-top))",
             zIndex: 0,
             pointerEvents: "none",
           }}
         >
+          {/* Image */}
           <div
             style={{
               position: "absolute",
               inset: 0,
               backgroundImage: `url(${headerBackdropSrc})`,
               backgroundSize: "cover",
-              backgroundPosition: "center",
+              backgroundPosition: "center top", // <-- anchor image to top
               opacity: 0.6,
             }}
           />
+
+          {/* Top scrim band (makes the non-full-bleed top feel intentional) */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 200, // <-- recommended starting point
+              background:
+                "linear-gradient(to bottom, rgba(13,13,13,0.92) 0%, rgba(13,13,13,0) 100%)",
+            }}
+          />
+
+          {/* Bottom fade (your original) */}
           <div
             style={{
               position: "absolute",
@@ -370,7 +386,10 @@ export default function Home() {
             flexDirection: "column",
             paddingLeft: 12,
             paddingRight: 12,
-            paddingTop: "calc(env(safe-area-inset-top) + 20px)",
+
+            // re-add safe zone (but as padding, not a spacer div)
+            // 28px gives your header a touch more air vs the prior 20px
+            paddingTop: "calc(env(safe-area-inset-top) + 28px)",
             boxSizing: "border-box",
           }}
         >
@@ -421,7 +440,7 @@ export default function Home() {
               overflowX: "hidden",
               WebkitOverflowScrolling: "touch",
               // Nav height + 16 buffer
-              paddingBottom: NAV_H + 16, // <-- 76
+              paddingBottom: NAV_H + 16, // 76
               boxSizing: "border-box",
               maskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
               WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
@@ -446,10 +465,7 @@ export default function Home() {
         </div>
 
         {/* Bottom nav overlays content */}
-        <BottomNav
-          bottomNavStyle={bottomNavStyle}
-          navButtonHeight={NAV_BUTTON_H}
-        />
+        <BottomNav bottomNavStyle={bottomNavStyle} navButtonHeight={NAV_BUTTON_H} />
       </div>
     </div>
   );
