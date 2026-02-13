@@ -4,12 +4,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-/**
- * IMPORTANT (so this actually works):
- * 1) Your SVGs must use currentColor (NOT hard-coded black/white).
- */
 import HomeDefault from "@/icons/icon-home-default.svg";
 import HomeActive from "@/icons/icon-home-active.svg";
 
@@ -22,9 +18,6 @@ import SetActive from "@/icons/icon-setmenu-active.svg";
 import SettingsDefault from "@/icons/icon-settings-default.svg";
 import SettingsActive from "@/icons/icon-settings-active.svg";
 
-/* -----------------------------
-   Responsive helper
------------------------------- */
 function useIsMobile(breakpoint = 480) {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -62,7 +55,6 @@ function Poster({ src }) {
         whileTap={{ scale: 1.05 }}
         transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
       />
-
       <div
         style={{
           position: "absolute",
@@ -77,9 +69,6 @@ function Poster({ src }) {
   );
 }
 
-/* -----------------------------
-   Bottom Nav (SVGR ICONS)
------------------------------- */
 function BottomNav({ bottomNavStyle }) {
   const pathname = usePathname();
   const [hoveredKey, setHoveredKey] = useState(null);
@@ -100,55 +89,15 @@ function BottomNav({ bottomNavStyle }) {
       : null;
 
   const NAV_ITEMS = [
-    {
-      key: "home",
-      label: "Home",
-      href: "/",
-      DefaultIcon: HomeDefault,
-      ActiveIcon: HomeActive,
-      width: 18,
-      height: 16,
-    },
-    {
-      key: "cuts",
-      label: "My Cuts",
-      href: "/my-cuts",
-      DefaultIcon: CutsDefault,
-      ActiveIcon: CutsActive,
-      width: 16,
-      height: 16,
-    },
-    {
-      key: "set",
-      label: "Set Menu",
-      href: "/set-menu",
-      DefaultIcon: SetDefault,
-      ActiveIcon: SetActive,
-      width: 16,
-      height: 16,
-    },
-    {
-      key: "settings",
-      label: "Settings",
-      href: "/settings",
-      DefaultIcon: SettingsDefault,
-      ActiveIcon: SettingsActive,
-      width: 16,
-      height: 16,
-    },
+    { key: "home", label: "Home", href: "/", DefaultIcon: HomeDefault, ActiveIcon: HomeActive, width: 18, height: 16 },
+    { key: "cuts", label: "My Cuts", href: "/my-cuts", DefaultIcon: CutsDefault, ActiveIcon: CutsActive, width: 16, height: 16 },
+    { key: "set", label: "Set Menu", href: "/set-menu", DefaultIcon: SetDefault, ActiveIcon: SetActive, width: 16, height: 16 },
+    { key: "settings", label: "Settings", href: "/settings", DefaultIcon: SettingsDefault, ActiveIcon: SettingsActive, width: 16, height: 16 },
   ];
 
-  const navInnerStyle = {
-    height: "100%",
-    width: "100%",
-    display: "flex",
-    boxSizing: "border-box",
-  };
-
-  // NOTE: color is on Link so icon + label inherit it (via currentColor SVG)
   const navItemStyle = {
     flex: 1,
-    height: 48, // button container height (kept)
+    height: 48,
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -178,17 +127,14 @@ function BottomNav({ bottomNavStyle }) {
 
   return (
     <nav style={bottomNavStyle}>
-      <div style={navInnerStyle}>
+      <div style={{ height: "100%", width: "100%", display: "flex", boxSizing: "border-box" }}>
         {NAV_ITEMS.map((item) => {
           const isActive = item.key === activeKey;
-
           const isHovering = item.key === hoveredKey;
           const isPressed = item.key === pressedKey;
-
           const isInteractiveHighlight = !isActive && (isHovering || isPressed);
 
           const color = isActive ? "#FFFFFF" : isInteractiveHighlight ? "#999999" : "#444444";
-
           const Icon = isActive ? item.ActiveIcon : item.DefaultIcon;
 
           return (
@@ -204,13 +150,7 @@ function BottomNav({ bottomNavStyle }) {
               onPointerCancel={() => setPressedKey(null)}
             >
               <div style={iconWrapStyle}>
-                <Icon
-                  width={item.width}
-                  height={item.height}
-                  aria-hidden="true"
-                  focusable="false"
-                  style={{ display: "block" }}
-                />
+                <Icon width={item.width} height={item.height} aria-hidden="true" focusable="false" style={{ display: "block" }} />
               </div>
               <div style={navLabelStyle}>{item.label}</div>
             </Link>
@@ -221,14 +161,10 @@ function BottomNav({ bottomNavStyle }) {
   );
 }
 
-/* -----------------------------
-   Page
------------------------------- */
 export default function Home() {
   const isMobile = useIsMobile(480);
   const headerBackdropSrc = "/films/spirited-away/backdrop.webp";
 
-  // ✅ keep nav sizing amendment: paddingTop 6 + paddingBottom 12 = 18 => 48 + 18 = 66
   const NAV_BUTTON_H = 48;
   const NAV_H = NAV_BUTTON_H + 18; // 66
 
@@ -270,13 +206,12 @@ export default function Home() {
     rowGap: 24,
   };
 
-  // ✅ keep nav style amendment (paddingBottom 12)
   const bottomNavStyle = {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    height: NAV_H, // 66
+    height: NAV_H,
     background: "#0D0D0D",
     borderTop: "1px solid #444444",
     zIndex: 50,
@@ -287,8 +222,81 @@ export default function Home() {
     paddingBottom: 12,
   };
 
+  // --- NEW: forward scroll gestures to the grid scroller
+  const scrollerRef = useRef(null);
+  const gestureRef = useRef({
+    active: false,
+    startX: 0,
+    startY: 0,
+    lastY: 0,
+    locked: null, // "y" | "x" | null
+  });
+
+  function isInteractiveTarget(target) {
+    if (!target) return false;
+    const el = target.closest?.("input, textarea, select, button, a, [role='button']");
+    return Boolean(el);
+  }
+
+  const onTouchStart = (e) => {
+    // only on mobile-ish; desktop should keep normal behaviour
+    if (!isMobile) return;
+
+    // don’t hijack gestures that start on inputs/buttons/links etc.
+    if (isInteractiveTarget(e.target)) return;
+
+    const t = e.touches?.[0];
+    if (!t) return;
+
+    gestureRef.current = {
+      active: true,
+      startX: t.clientX,
+      startY: t.clientY,
+      lastY: t.clientY,
+      locked: null,
+    };
+  };
+
+  const onTouchMove = (e) => {
+    if (!isMobile) return;
+    if (!gestureRef.current.active) return;
+
+    // allow normal input gestures
+    if (isInteractiveTarget(e.target)) return;
+
+    const scroller = scrollerRef.current;
+    const t = e.touches?.[0];
+    if (!scroller || !t) return;
+
+    const dx = t.clientX - gestureRef.current.startX;
+    const dy = t.clientY - gestureRef.current.startY;
+
+    // lock direction after a small threshold
+    if (!gestureRef.current.locked) {
+      const ax = Math.abs(dx);
+      const ay = Math.abs(dy);
+      if (ax < 6 && ay < 6) return;
+      gestureRef.current.locked = ay >= ax ? "y" : "x";
+    }
+
+    if (gestureRef.current.locked !== "y") return;
+
+    // Prevent iOS from attempting to scroll the body / pull-to-refresh
+    e.preventDefault();
+
+    const deltaY = t.clientY - gestureRef.current.lastY;
+    gestureRef.current.lastY = t.clientY;
+
+    // Move scroller opposite finger movement
+    scroller.scrollTop -= deltaY;
+  };
+
+  const onTouchEnd = () => {
+    gestureRef.current.active = false;
+    gestureRef.current.locked = null;
+  };
+
   return (
-    // Stage (canvas) — ✅ keep mobile black / desktop white
     <div
       style={{
         width: "100vw",
@@ -300,8 +308,12 @@ export default function Home() {
         overflow: "hidden",
       }}
     >
-      {/* App frame */}
       <div
+        // capture touch gestures anywhere inside the app frame
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
         style={{
           width: isMobile ? "100vw" : 420,
           height: isMobile ? "100dvh" : 874,
@@ -313,9 +325,10 @@ export default function Home() {
           flexDirection: "column",
           position: "relative",
           borderRadius: 0,
+          touchAction: "pan-y", // hint: vertical pan is intended
         }}
       >
-        {/* Backdrop layer (unchanged from your v2 structure) */}
+        {/* Backdrop layer */}
         <div
           style={{
             position: "absolute",
@@ -347,7 +360,7 @@ export default function Home() {
           />
         </div>
 
-        {/* Foreground wrapper (v2 layout: header + search outside scroll) */}
+        {/* Foreground wrapper (v2) */}
         <div
           style={{
             position: "relative",
@@ -360,7 +373,7 @@ export default function Home() {
             boxSizing: "border-box",
           }}
         >
-          {/* iOS safe zone spacer — reverted to v2 (no overlays, no gradients) */}
+          {/* iOS safe zone spacer */}
           <div style={{ height: 62 }} />
 
           {/* Header */}
@@ -375,7 +388,7 @@ export default function Home() {
             <img src="/logo.svg" alt="Seconds" style={{ height: 28, width: "auto" }} />
           </div>
 
-          {/* Search bar — reverted (no added gradients) */}
+          {/* Search bar */}
           <div style={{ paddingTop: 24, display: "flex", alignItems: "center" }}>
             <input
               type="text"
@@ -401,20 +414,20 @@ export default function Home() {
             />
           </div>
 
-          {/* Scroll container (v2) */}
+          {/* Scroll container */}
           <div
+            ref={scrollerRef}
             style={{
               flex: 1,
               minHeight: 0,
               overflowY: "auto",
               overflowX: "hidden",
               WebkitOverflowScrolling: "touch",
-              paddingBottom: NAV_H + 16, // ✅ updated to match nav (66 + 16 = 82)
+              paddingBottom: NAV_H + 16,
               boxSizing: "border-box",
-
-              // This is the v2 fade behaviour you had (no extra gradients added elsewhere)
               maskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
               WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
+              overscrollBehavior: "contain",
             }}
           >
             <div style={gridStyle}>
@@ -430,12 +443,10 @@ export default function Home() {
               ))}
             </div>
 
-            {/* debug overflow */}
             <div style={{ height: 400 }} />
           </div>
         </div>
 
-        {/* Bottom nav overlays content */}
         <BottomNav bottomNavStyle={bottomNavStyle} />
       </div>
     </div>
