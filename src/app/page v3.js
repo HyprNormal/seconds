@@ -321,7 +321,7 @@ export default function Home() {
           display: "flex",
           flexDirection: "column",
           position: "relative",
-          borderRadius: 0, // keep exactly as before on desktop too
+          borderRadius: isMobile ? 0 : 16, // optional: device feel on desktop
         }}
       >
         {/* Backdrop layer */}
@@ -331,7 +331,7 @@ export default function Home() {
             top: 0,
             left: 0,
             width: "100%",
-            height: "calc(386px + env(safe-area-inset-top))",
+            height: 386,
             zIndex: 0,
             pointerEvents: "none",
           }}
@@ -366,10 +366,13 @@ export default function Home() {
             flexDirection: "column",
             paddingLeft: 12,
             paddingRight: 12,
-            paddingTop: "calc(env(safe-area-inset-top) + 20px)",
             boxSizing: "border-box",
           }}
         >
+          {/* iOS safe zone (responsive) */}
+          <div style={{ height: "env(safe-area-inset-top)" }} />
+          <div style={{ height: 20 }} />
+
           {/* Header */}
           <div
             style={{
