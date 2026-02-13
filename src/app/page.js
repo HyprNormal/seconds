@@ -4,12 +4,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-/**
- * IMPORTANT:
- * Your SVGs must use currentColor (NOT hard-coded black/white).
- */
 import HomeDefault from "@/icons/icon-home-default.svg";
 import HomeActive from "@/icons/icon-home-active.svg";
 
@@ -100,42 +96,10 @@ function BottomNav({ bottomNavStyle }) {
       : null;
 
   const NAV_ITEMS = [
-    {
-      key: "home",
-      label: "Home",
-      href: "/",
-      DefaultIcon: HomeDefault,
-      ActiveIcon: HomeActive,
-      width: 18,
-      height: 16,
-    },
-    {
-      key: "cuts",
-      label: "My Cuts",
-      href: "/my-cuts",
-      DefaultIcon: CutsDefault,
-      ActiveIcon: CutsActive,
-      width: 16,
-      height: 16,
-    },
-    {
-      key: "set",
-      label: "Set Menu",
-      href: "/set-menu",
-      DefaultIcon: SetDefault,
-      ActiveIcon: SetActive,
-      width: 16,
-      height: 16,
-    },
-    {
-      key: "settings",
-      label: "Settings",
-      href: "/settings",
-      DefaultIcon: SettingsDefault,
-      ActiveIcon: SettingsActive,
-      width: 16,
-      height: 16,
-    },
+    { key: "home", label: "Home", href: "/", DefaultIcon: HomeDefault, ActiveIcon: HomeActive, width: 18, height: 16 },
+    { key: "cuts", label: "My Cuts", href: "/my-cuts", DefaultIcon: CutsDefault, ActiveIcon: CutsActive, width: 16, height: 16 },
+    { key: "set", label: "Set Menu", href: "/set-menu", DefaultIcon: SetDefault, ActiveIcon: SetActive, width: 16, height: 16 },
+    { key: "settings", label: "Settings", href: "/settings", DefaultIcon: SettingsDefault, ActiveIcon: SettingsActive, width: 16, height: 16 },
   ];
 
   const navInnerStyle = {
@@ -147,7 +111,7 @@ function BottomNav({ bottomNavStyle }) {
 
   const navItemStyle = {
     flex: 1,
-    height: 48,
+    height: 48, // button container height
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -218,9 +182,18 @@ export default function Home() {
   const isMobile = useIsMobile(480);
   const headerBackdropSrc = "/films/spirited-away/backdrop.webp";
 
-  // ✅ nav sizing amendment: paddingTop 6 + paddingBottom 12 = 18 => 48 + 18 = 66
+  // ✅ keep nav sizing amendment: 48 button + (6 top + 12 bottom) = 66
   const NAV_BUTTON_H = 48;
   const NAV_H = NAV_BUTTON_H + 18; // 66
+
+  // Header stack (matches your v2 look)
+  const SAFE = 62; // your v2 spacer height
+  const LOGO_H = 48;
+  const SEARCH_TOP = 24;
+  const SEARCH_H = 48;
+
+  // This is exactly where grid starts in v2
+  const HEADER_TOTAL = SAFE + LOGO_H + SEARCH_TOP + SEARCH_H;
 
   const films = [
     { id: "tampopo", poster: "/films/tampopo/cover.webp", stamps: 5 },
@@ -276,175 +249,6 @@ export default function Home() {
     paddingBottom: 12,
   };
 
-  // --- scroll forwarding + momentum (native listeners)
-  const frameRef = useRef(null);
-  const scrollerRef = useRef(null);
-
-  const gestureRef = useRef({
-    active: false,
-    startX: 0,
-    startY: 0,
-    lastY: 0,
-    locked: null, // "y" | "x" | null
-    lastTime: 0,
-    velocity: 0, // px/ms (finger space)
-  });
-
-  const momentumRef = useRef({
-    raf: null,
-    velocity: 0, // px/ms
-  });
-
-  function isInteractiveTarget(target) {
-    if (!target) return false;
-    const el = target.closest?.("input, textarea, select, button, a, [role='button']");
-    return Boolean(el);
-  }
-
-  function clamp(n, min, max) {
-    return Math.max(min, Math.min(max, n));
-  }
-
-  function stopMomentum() {
-    if (momentumRef.current.raf) {
-      cancelAnimationFrame(momentumRef.current.raf);
-      momentumRef.current.raf = null;
-    }
-    momentumRef.current.velocity = 0;
-  }
-
-  function startMomentum() {
-    const scroller = scrollerRef.current;
-    if (!scroller) return;
-
-    stopMomentum();
-
-    // tuned a bit “more iOS”
-    const FRICTION = 0.94; // longer glide
-    const MIN_V = 0.015; // stop threshold
-    const MAX_STEP = 72;
-
-    let last = performance.now();
-    let v = momentumRef.current.velocity;
-
-    const tick = () => {
-      const now = performance.now();
-      const dt = now - last;
-      last = now;
-
-      const step = clamp(v * dt, -MAX_STEP, MAX_STEP);
-      const prevTop = scroller.scrollTop;
-      scroller.scrollTop -= step;
-
-      // hit bounds → stop
-      if (scroller.scrollTop === prevTop) {
-        stopMomentum();
-        return;
-      }
-
-      v *= Math.pow(FRICTION, dt / 16.67);
-
-      if (Math.abs(v) < MIN_V) {
-        stopMomentum();
-        return;
-      }
-
-      momentumRef.current.velocity = v;
-      momentumRef.current.raf = requestAnimationFrame(tick);
-    };
-
-    momentumRef.current.raf = requestAnimationFrame(tick);
-  }
-
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame) return;
-
-    const onStart = (e) => {
-      if (!isMobile) return;
-      if (isInteractiveTarget(e.target)) return;
-
-      stopMomentum();
-
-      const t = e.touches?.[0];
-      if (!t) return;
-
-      const now = performance.now();
-      gestureRef.current = {
-        active: true,
-        startX: t.clientX,
-        startY: t.clientY,
-        lastY: t.clientY,
-        locked: null,
-        lastTime: now,
-        velocity: 0,
-      };
-    };
-
-    const onMove = (e) => {
-      if (!isMobile) return;
-      if (!gestureRef.current.active) return;
-      if (isInteractiveTarget(e.target)) return;
-
-      const scroller = scrollerRef.current;
-      const t = e.touches?.[0];
-      if (!scroller || !t) return;
-
-      const now = performance.now();
-
-      const dx = t.clientX - gestureRef.current.startX;
-      const dy = t.clientY - gestureRef.current.startY;
-
-      if (!gestureRef.current.locked) {
-        const ax = Math.abs(dx);
-        const ay = Math.abs(dy);
-        if (ax < 6 && ay < 6) return;
-        gestureRef.current.locked = ay >= ax ? "y" : "x";
-      }
-
-      if (gestureRef.current.locked !== "y") return;
-
-      // critical: stop body rubber-band / pull-to-refresh
-      e.preventDefault();
-
-      const deltaY = t.clientY - gestureRef.current.lastY;
-      const dt = now - gestureRef.current.lastTime || 16.67;
-
-      scroller.scrollTop -= deltaY;
-
-      const instantV = deltaY / dt;
-      gestureRef.current.velocity = gestureRef.current.velocity * 0.8 + instantV * 0.2;
-
-      gestureRef.current.lastY = t.clientY;
-      gestureRef.current.lastTime = now;
-    };
-
-    const onEnd = () => {
-      if (!gestureRef.current.active) return;
-
-      gestureRef.current.active = false;
-      gestureRef.current.locked = null;
-
-      momentumRef.current.velocity = gestureRef.current.velocity;
-
-      if (Math.abs(momentumRef.current.velocity) > 0.03) startMomentum();
-    };
-
-    const opts = { passive: false };
-
-    frame.addEventListener("touchstart", onStart, opts);
-    frame.addEventListener("touchmove", onMove, opts);
-    frame.addEventListener("touchend", onEnd, opts);
-    frame.addEventListener("touchcancel", onEnd, opts);
-
-    return () => {
-      frame.removeEventListener("touchstart", onStart, opts);
-      frame.removeEventListener("touchmove", onMove, opts);
-      frame.removeEventListener("touchend", onEnd, opts);
-      frame.removeEventListener("touchcancel", onEnd, opts);
-    };
-  }, [isMobile]);
-
   return (
     <div
       style={{
@@ -458,7 +262,6 @@ export default function Home() {
       }}
     >
       <div
-        ref={frameRef}
         style={{
           width: isMobile ? "100vw" : 420,
           height: isMobile ? "100dvh" : 874,
@@ -470,7 +273,6 @@ export default function Home() {
           flexDirection: "column",
           position: "relative",
           borderRadius: 0,
-          touchAction: "pan-y",
         }}
       >
         {/* Backdrop layer */}
@@ -505,74 +307,31 @@ export default function Home() {
           />
         </div>
 
-        {/* Foreground wrapper (v2 layout) */}
+        {/* FULL-HEIGHT NATIVE SCROLLER (this is the key for “real” iOS glide) */}
         <div
           style={{
-            position: "relative",
+            position: "absolute",
+            inset: 0,
             zIndex: 1,
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            paddingLeft: 12,
-            paddingRight: 12,
+            overflowY: "auto",
+            overflowX: "hidden",
+            WebkitOverflowScrolling: "touch",
+            overscrollBehavior: "contain",
+            paddingBottom: NAV_H + 16,
             boxSizing: "border-box",
           }}
         >
-          {/* iOS safe zone spacer — v2 */}
-          <div style={{ height: 62 }} />
+          {/* Spacer so content starts below header (v2 look) */}
+          <div style={{ height: HEADER_TOTAL }} />
 
-          {/* Header */}
+          {/* Grid content + v2 fade at the top edge of the scroll region */}
           <div
             style={{
-              height: 48,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <img src="/logo.svg" alt="Seconds" style={{ height: 28, width: "auto" }} />
-          </div>
-
-          {/* Search bar */}
-          <div style={{ paddingTop: 24, display: "flex", alignItems: "center" }}>
-            <input
-              type="text"
-              placeholder="Search films, dishes, ingredients"
-              style={{
-                width: "100%",
-                color: "#999999",
-                paddingLeft: 16,
-                paddingRight: 16,
-                height: 48,
-                borderRadius: 24,
-                fontWeight: 500,
-                fontSize: 14,
-                fontFamily: "var(--font-manrope)",
-                lineHeight: "1.4em",
-                letterSpacing: "0em",
-                userSelect: "none",
-                border: "0",
-                backgroundColor: "white",
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-
-          {/* Scroll container (grid) */}
-          <div
-            ref={scrollerRef}
-            style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: "auto",
-              overflowX: "hidden",
-              WebkitOverflowScrolling: "touch",
-              paddingBottom: NAV_H + 16, // 82
+              paddingLeft: 12,
+              paddingRight: 12,
               boxSizing: "border-box",
               maskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
               WebkitMaskImage: "linear-gradient(to bottom, transparent 0px, black 24px)",
-              overscrollBehavior: "contain",
             }}
           >
             <div style={gridStyle}>
@@ -593,7 +352,61 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Bottom nav overlays content */}
+        {/* Header overlay (v2 look) — allow swipes to pass through except the input */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 20,
+            paddingLeft: 12,
+            paddingRight: 12,
+            boxSizing: "border-box",
+            pointerEvents: "none", // <-- key: header doesn't block scrolling gestures
+          }}
+        >
+          <div style={{ height: SAFE }} />
+
+          <div
+            style={{
+              height: LOGO_H,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <img src="/logo.svg" alt="Seconds" style={{ height: 28, width: "auto" }} />
+          </div>
+
+          <div style={{ paddingTop: SEARCH_TOP, display: "flex", alignItems: "center" }}>
+            <input
+              type="text"
+              placeholder="Search films, dishes, ingredients"
+              style={{
+                pointerEvents: "auto", // <-- but search remains interactive
+                width: "100%",
+                color: "#999999",
+                paddingLeft: 16,
+                paddingRight: 16,
+                height: SEARCH_H,
+                borderRadius: 24,
+                fontWeight: 500,
+                fontSize: 14,
+                fontFamily: "var(--font-manrope)",
+                lineHeight: "1.4em",
+                letterSpacing: "0em",
+                userSelect: "none",
+                border: "0",
+                backgroundColor: "white",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Bottom nav overlays */}
         <BottomNav bottomNavStyle={bottomNavStyle} />
       </div>
     </div>
