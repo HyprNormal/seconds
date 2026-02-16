@@ -1,4 +1,3 @@
-// page v2.js
 "use client";
 
 import Link from "next/link";
@@ -18,10 +17,19 @@ import SetActive from "@/icons/icon-setmenu-active.svg";
 import SettingsDefault from "@/icons/icon-settings-default.svg";
 import SettingsActive from "@/icons/icon-settings-active.svg";
 
+import SearchIcon from "@/icons/icon-search.svg";
+import FilterIcon from "@/icons/icon-filter.svg";
+
 // Flags (multicolour SVGs — do NOT use currentColor)
 import FlagUK from "@/icons/flags/flag-uk.svg";
 import FlagJP from "@/icons/flags/flag-jp.svg";
 import FlagDE from "@/icons/flags/flag-de.svg";
+import FlagFR from "@/icons/flags/flag-fr.svg";
+import FlagIT from "@/icons/flags/flag-it.svg";
+import FlagCU from "@/icons/flags/flag-cu.svg";
+import FlagHK from "@/icons/flags/flag-hk.svg";
+import FlagUS from "@/icons/flags/flag-us.svg";
+import FlagDK from "@/icons/flags/flag-dk.svg";
 
 /* -----------------------------
    Responsive helper
@@ -43,6 +51,12 @@ const FLAG_MAP = {
   uk: FlagUK,
   jp: FlagJP,
   de: FlagDE,
+  fr: FlagFR,
+  it: FlagIT,
+  cu: FlagCU,
+  hk: FlagHK,
+  us: FlagUS,
+  dk: FlagDK
 };
 
 function Poster({ src, country }) {
@@ -67,14 +81,13 @@ function Poster({ src, country }) {
           backgroundSize: "cover",
           backgroundPosition: "center",
           transformOrigin: "center",
-          zIndex: 0,
         }}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 1.05 }}
         transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
       />
 
-      {/* Flag (bottom-right, 6px inset) */}
+      {/* Flag (bottom-right) */}
       {Flag && (
         <div
           style={{
@@ -83,7 +96,6 @@ function Poster({ src, country }) {
             bottom: 6,
             width: 16,
             height: 16,
-            zIndex: 1,
             pointerEvents: "none",
             filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.24))",
           }}
@@ -101,13 +113,11 @@ function Poster({ src, country }) {
           border: "1px solid #444444",
           boxSizing: "border-box",
           pointerEvents: "none",
-          zIndex: 2,
         }}
       />
     </div>
   );
 }
-
 
 /* -----------------------------
    Bottom Nav (SVGR ICONS)
@@ -147,7 +157,7 @@ function BottomNav({ bottomNavStyle }) {
 
   const navItemStyle = {
     flex: 1,
-    height: 48, // button container height
+    height: 48,
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -216,55 +226,85 @@ function BottomNav({ bottomNavStyle }) {
 ------------------------------ */
 export default function Home() {
   const isMobile = useIsMobile(480);
+
+  // ✅ V7 search behaviour
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  // ✅ Films loaded from /public/films/index.json and /public/films/<id>/film.json
+  const [films, setFilms] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadFilms() {
+      try {
+        const indexRes = await fetch("/films/index.json", { cache: "no-store" });
+        if (!indexRes.ok) throw new Error("Missing /films/index.json");
+        const ids = await indexRes.json();
+
+        const results = await Promise.allSettled(
+          ids.map(async (id) => {
+            const res = await fetch(`/films/${id}/film.json`, { cache: "no-store" });
+            if (!res.ok) throw new Error(`Missing /films/${id}/film.json`);
+            const data = await res.json();
+
+            return {
+              ...data,
+              id: data?.id || id,
+              poster: `/films/${id}/cover.webp`,
+              backdrop: `/films/${id}/backdrop.webp`,
+              stamps: Number.isFinite(data?.stamps) ? data.stamps : 0,
+              country: typeof data?.country === "string" ? data.country.toLowerCase() : undefined,
+            };
+          })
+        );
+
+        const ok = results
+          .filter((r) => r.status === "fulfilled")
+          .map((r) => r.value);
+
+        if (!cancelled) setFilms(ok);
+      } catch {
+        if (!cancelled) setFilms([]);
+      }
+    }
+
+    loadFilms();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ✅ Header backdrop fixed as requested (NOT dynamic)
   const headerBackdropSrc = "/films/spirited-away/backdrop.webp";
 
   // ✅ keep nav sizing: 48 button + (6 top + 12 bottom) = 66
   const NAV_BUTTON_H = 48;
   const NAV_H = NAV_BUTTON_H + 18; // 66
 
-  // Header geometry (safe-area aware)
+  // Header geometry (safe-area aware) — unchanged
   const SAFE_TOP = "env(safe-area-inset-top)";
-  const SAFE_BREATH = 28; // replaces your old “62px” guess
+  const SAFE_BREATH = 28;
   const LOGO_H = 48;
   const SEARCH_TOP = 24;
   const SEARCH_H = 48;
 
   const HEADER_TOTAL = `calc(${SAFE_TOP} + ${SAFE_BREATH + LOGO_H + SEARCH_TOP + SEARCH_H}px)`;
 
-  // Plate extension + fade (your request)
-  const PLATE_EXTEND = 24; // extend plate 24px below search
-  const PLATE_FADE = 12; // last 12px fades to transparent
+  // Plate extension + fade — unchanged
+  const PLATE_EXTEND = 24;
+  const PLATE_FADE = 12;
   const HEADER_PLATE_H = `calc(${HEADER_TOTAL} + ${PLATE_EXTEND}px)`;
 
-  // Canonical hero render height (so crop stays seamless between layers)
+  // Canonical hero render height — unchanged
   const HERO_H = `calc(420px + ${SAFE_TOP})`;
 
-  // HERO treatment (opaque image + overlays)
+  // HERO treatment — unchanged
   const HERO_POS = "center top";
-  const HERO_OPACITY = 1; // fully opaque so grid can’t bleed through
+  const HERO_OPACITY = 1;
   const HERO_DARKEN = "rgba(13, 13, 13, 0.20)";
   const HERO_TINT = "rgba(10, 40, 110, 0.18)";
   const HERO_GRADIENT_OPACITY = 0.9;
-
-  const films = [
-    { id: "tampopo", poster: "/films/tampopo/cover.webp", stamps: 5, country: "jp" },
-    { id: "delicetessen", poster: "/films/delicetessen/cover.webp", stamps: 3 },
-    { id: "boiling-point", poster: "/films/boiling-point/cover.webp", stamps: 4, country: "uk" },
-    { id: "chunking-express", poster: "/films/chunking-express/cover.webp", stamps: 5 },
-    { id: "ponyo", poster: "/films/ponyo/cover.webp", stamps: 2, country: "jp" },
-    { id: "ratatouille", poster: "/films/ratatouille/cover.webp", stamps: 3 },
-    { id: "delicious", poster: "/films/delicious/cover.webp", stamps: 4 },
-    { id: "the-menu", poster: "/films/the-menu/cover.webp", stamps: 2 },
-    { id: "babettes-feast", poster: "/films/babettes-feast/cover.webp", stamps: 4 },
-    { id: "chef", poster: "/films/chef/cover.webp", stamps: 3 },
-    { id: "burnt", poster: "/films/burnt/cover.webp", stamps: 2 },
-    { id: "big-night", poster: "/films/big-night/cover.webp", stamps: 4 },
-    { id: "the-taste-of-things", poster: "/films/the-taste-of-things/cover.webp", stamps: 5 },
-    { id: "sideways", poster: "/films/sideways/cover.webp", stamps: 2 },
-    { id: "the-cook-the-theif", poster: "/films/the-cook-the-thief/cover.webp", stamps: 3 },
-    { id: "spirited-away", poster: "/films/spirited-away/cover.webp", stamps: 3, country: "jp" },
-
-  ];
 
   const tileStyle = { display: "flex", flexDirection: "column", gap: 12 };
 
@@ -385,7 +425,7 @@ export default function Home() {
             boxSizing: "border-box",
           }}
         >
-          {/* Spacer below header */}
+          {/* Spacer below header — unchanged */}
           <div style={{ height: HEADER_TOTAL }} />
 
           <div style={{ paddingLeft: 12, paddingRight: 12, boxSizing: "border-box" }}>
@@ -411,12 +451,10 @@ export default function Home() {
             top: 0,
             left: 0,
             right: 0,
-            height: HEADER_PLATE_H, // extended by 24px
+            height: HEADER_PLATE_H,
             zIndex: 15,
             pointerEvents: "none",
             overflow: "hidden",
-
-            // Fade only the plate (alpha) over its last 12px
             WebkitMaskImage: `linear-gradient(
               to bottom,
               black 0px,
@@ -455,7 +493,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Header overlay (unchanged look) */}
+        {/* Header overlay (look + padding unchanged) */}
         <div
           style={{
             position: "absolute",
@@ -482,30 +520,88 @@ export default function Home() {
             <img src="/logo.svg" alt="Seconds" style={{ height: 28, width: "auto" }} />
           </div>
 
+          {/* ✅ V7 SEARCH BAR (verbatim) */}
           <div style={{ paddingTop: SEARCH_TOP, display: "flex", alignItems: "center" }}>
-            <input
-              type="text"
-              placeholder="Search films, dishes, ingredients"
-              style={{
-                pointerEvents: "auto",
-                width: "100%",
-                color: "#999999",
-                paddingLeft: 16,
-                paddingRight: 16,
-                height: SEARCH_H,
-                borderRadius: 24,
-                fontWeight: 500,
-                fontSize: 14,
-                fontFamily: "var(--font-manrope)",
-                lineHeight: "1.4em",
-                letterSpacing: "0em",
-                userSelect: "none",
-                border: "0",
-                backgroundColor: "white",
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-            />
+            <div style={{ position: "relative", width: "100%", pointerEvents: "auto" }}>
+              {/* Left icon */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: 16,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 16,
+                  height: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  pointerEvents: "none",
+                  color: "#444444", // icon-search.svg
+                }}
+              >
+                <SearchIcon width={16} height={16} aria-hidden="true" focusable="false" style={{ display: "block" }} />
+              </div>
+
+              {/* Right icon */}
+              <div
+                style={{
+                  position: "absolute",
+                  right: 16,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 16,
+                  height: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  pointerEvents: "none",
+                  color: "#999999", // icon-filter.svg
+                }}
+              >
+                <FilterIcon width={16} height={16} aria-hidden="true" focusable="false" style={{ display: "block" }} />
+              </div>
+
+              <input
+                type="text"
+                placeholder={isSearchFocused ? "" : "Search films, dishes, ingredients"}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={(e) => {
+                  if (!e.target.value) setIsSearchFocused(false);
+                }}
+                className="secondsSearch"
+                style={{
+                  width: "100%",
+                  height: SEARCH_H,
+                  borderRadius: 24,
+                  border: "0",
+                  backgroundColor: "white",
+                  outline: "none",
+                  boxSizing: "border-box",
+
+                  // typed text
+                  color: "#444444",
+
+                  fontWeight: 500,
+                  fontSize: 16, // prevents iOS zoom
+                  fontFamily: "var(--font-manrope)",
+                  lineHeight: "1.4em",
+                  letterSpacing: "0em",
+
+                  // 16 (left edge) + 16 (icon) + 12 (gap)
+                  paddingLeft: 44,
+                  // 16 (right edge) + 16 (icon)
+                  paddingRight: 32,
+                }}
+              />
+
+              {/* Placeholder styling */}
+              <style jsx>{`
+                .secondsSearch::placeholder {
+                  color: #999999;
+                  opacity: 1;
+                }
+              `}</style>
+            </div>
           </div>
         </div>
 
