@@ -32,31 +32,6 @@ import FlagUS from "@/icons/flags/flag-us.svg";
 import FlagDK from "@/icons/flags/flag-dk.svg";
 
 /* -----------------------------
-   Motion (matches nav feel)
------------------------------- */
-const EASE = [0.16, 1, 0.3, 1];
-const CARD_ENTER_MS = 180;
-
-const resultsContainerVariants = {
-  hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.03, // extremely subtle
-      delayChildren: 0.02,
-    },
-  },
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 12 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: CARD_ENTER_MS / 1000, ease: EASE },
-  },
-};
-
-/* -----------------------------
    Responsive helper
 ------------------------------ */
 function useIsMobile(breakpoint = 480) {
@@ -97,6 +72,7 @@ function Poster({ src, country }) {
         position: "relative",
       }}
     >
+      {/* Image layer */}
       <motion.div
         style={{
           position: "absolute",
@@ -111,6 +87,7 @@ function Poster({ src, country }) {
         transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
       />
 
+      {/* Flag (bottom-right) */}
       {Flag && (
         <div
           style={{
@@ -127,6 +104,7 @@ function Poster({ src, country }) {
         </div>
       )}
 
+      {/* Stroke overlay (never scales) */}
       <div
         style={{
           position: "absolute",
@@ -142,15 +120,15 @@ function Poster({ src, country }) {
 }
 
 /* -----------------------------
-   Bottom Nav
+   Bottom Nav (SVGR ICONS)
 ------------------------------ */
 function BottomNav({ bottomNavStyle }) {
   const pathname = usePathname();
   const [hoveredKey, setHoveredKey] = useState(null);
   const [pressedKey, setPressedKey] = useState(null);
 
-  const NAV_EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
-  const NAV_DURATION = 180;
+  const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+  const DURATION = 180;
 
   const activeKey =
     pathname === "/"
@@ -164,42 +142,10 @@ function BottomNav({ bottomNavStyle }) {
       : null;
 
   const NAV_ITEMS = [
-    {
-      key: "home",
-      label: "Home",
-      href: "/",
-      DefaultIcon: HomeDefault,
-      ActiveIcon: HomeActive,
-      width: 18,
-      height: 16,
-    },
-    {
-      key: "cuts",
-      label: "My Cuts",
-      href: "/my-cuts",
-      DefaultIcon: CutsDefault,
-      ActiveIcon: CutsActive,
-      width: 16,
-      height: 16,
-    },
-    {
-      key: "set",
-      label: "Set Menu",
-      href: "/set-menu",
-      DefaultIcon: SetDefault,
-      ActiveIcon: SetActive,
-      width: 16,
-      height: 16,
-    },
-    {
-      key: "settings",
-      label: "Settings",
-      href: "/settings",
-      DefaultIcon: SettingsDefault,
-      ActiveIcon: SettingsActive,
-      width: 16,
-      height: 16,
-    },
+    { key: "home", label: "Home", href: "/", DefaultIcon: HomeDefault, ActiveIcon: HomeActive, width: 18, height: 16 },
+    { key: "cuts", label: "My Cuts", href: "/my-cuts", DefaultIcon: CutsDefault, ActiveIcon: CutsActive, width: 16, height: 16 },
+    { key: "set", label: "Set Menu", href: "/set-menu", DefaultIcon: SetDefault, ActiveIcon: SetActive, width: 16, height: 16 },
+    { key: "settings", label: "Settings", href: "/settings", DefaultIcon: SettingsDefault, ActiveIcon: SettingsActive, width: 16, height: 16 },
   ];
 
   const navInnerStyle = {
@@ -219,7 +165,7 @@ function BottomNav({ bottomNavStyle }) {
     gap: 6,
     textDecoration: "none",
     WebkitTapHighlightColor: "transparent",
-    transition: `color ${NAV_DURATION}ms ${NAV_EASE}`,
+    transition: `color ${DURATION}ms ${EASE}`,
   };
 
   const iconWrapStyle = {
@@ -248,11 +194,7 @@ function BottomNav({ bottomNavStyle }) {
           const isPressed = item.key === pressedKey;
           const isInteractiveHighlight = !isActive && (isHovering || isPressed);
 
-          const color = isActive
-            ? "#FFFFFF"
-            : isInteractiveHighlight
-            ? "#999999"
-            : "#444444";
+          const color = isActive ? "#FFFFFF" : isInteractiveHighlight ? "#999999" : "#444444";
           const Icon = isActive ? item.ActiveIcon : item.DefaultIcon;
 
           return (
@@ -268,13 +210,7 @@ function BottomNav({ bottomNavStyle }) {
               onPointerCancel={() => setPressedKey(null)}
             >
               <div style={iconWrapStyle}>
-                <Icon
-                  width={item.width}
-                  height={item.height}
-                  aria-hidden="true"
-                  focusable="false"
-                  style={{ display: "block" }}
-                />
+                <Icon width={item.width} height={item.height} aria-hidden="true" focusable="false" style={{ display: "block" }} />
               </div>
               <div style={navLabelStyle}>{item.label}</div>
             </Link>
@@ -302,6 +238,7 @@ function normalizeForSearch(s) {
   }
 }
 
+// Prefix match on ANY word in the title (so "de" matches "Devilled Eggs")
 function matchesQuery(title, q) {
   const t = normalizeForSearch(title);
   if (!q) return false;
@@ -311,11 +248,55 @@ function matchesQuery(title, q) {
 }
 
 /* -----------------------------
-   Results UI
+   Result UI (temporary cards)
+   Swap to your designed card later
 ------------------------------ */
 function Section({ title, children }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div
+        style={{
+          fontFamily: "var(--font-manrope)",
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: "0.01em",
+          color: "#999999",
+          textTransform: "uppercase",
+        }}
+      >
+        {title}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>{children}</div>
+    </div>
+  );
+}
+
+function ResultCard({ eyebrow, title, meta }) {
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        border: "1px solid #444444",
+        background: "rgba(13,13,13,0.35)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        padding: 14,
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "var(--font-manrope)",
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.01em",
+          color: "#999999",
+          marginBottom: 6,
+        }}
+      >
+        {eyebrow}
+      </div>
+
       <div
         style={{
           fontFamily: "var(--font-manrope)",
@@ -323,258 +304,47 @@ function Section({ title, children }) {
           fontWeight: 700,
           letterSpacing: "0em",
           color: "#FFFFFF",
+          lineHeight: "1.25em",
         }}
       >
         {title}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-/* -----------------------------
-   Chevron (CSS-only, cannot fail)
------------------------------- */
-function RightChevron() {
-  return (
-    <div
-      style={{
-        width: 40,
-        height: 40,
-        minWidth: 40,
-        minHeight: 40,
-        flex: "0 0 auto",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-      aria-hidden="true"
-    >
-      <div
-        style={{
-          width: 8,
-          height: 8,
-          borderRight: "2px solid #999999",
-          borderTop: "2px solid #999999",
-          transform: "rotate(45deg)",
-          boxSizing: "border-box",
-        }}
-      />
-    </div>
-  );
-}
-
-function FilmResultCard({ film }) {
-  const Flag = film?.country ? FLAG_MAP[film.country] : null;
-
-  const director = film?.director ? String(film.director) : "";
-  const year = film?.year ? String(film.year) : "";
-  const metaHasContent = Boolean(director || year);
-
-  return (
-    <div
-      style={{
-        height: 80,
-        background: "#FFFFFF",
-        borderRadius: 6,
-        padding: "8px 12px 8px 8px",
-        boxSizing: "border-box",
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-      }}
-    >
-      {/* Poster */}
-      <div
-        style={{
-          width: 48,
-          height: 64,
-          borderRadius: 4,
-          overflow: "hidden",
-          position: "relative",
-          flex: "0 0 auto",
-          background: "#EEEEEE",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: `url(${film.poster})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-      </div>
-
-      {/* Text column */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          minWidth: 0,
-          flex: 1,
-          marginLeft: 12, // poster -> text
-          marginRight: 12, // text -> icon
-        }}
-      >
-        {/* Title row + flag */}
-        <div style={{ display: "flex", alignItems: "center", height: 12, minWidth: 0 }}>
-          <div
-            style={{
-              fontFamily: "var(--font-manrope)",
-              fontSize: 16,
-              fontWeight: 700,
-              color: "#444444",
-              lineHeight: "12px",
-              height: 16,
-              paddingTop: 2,
-              boxSizing: "border-box",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              minWidth: 0,
-              flex: "0 1 auto",
-            }}
-            title={film.title}
-          >
-            {film.title}
-          </div>
-
-          {Flag && (
-            <div
-              style={{
-                width: 12,
-                height: 12,
-                marginLeft: 8,
-                flex: "0 0 auto",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.24))",
-              }}
-            >
-              <Flag width={12} height={12} aria-hidden="true" focusable="false" />
-            </div>
-          )}
-        </div>
-
-        {/* Director • Year */}
-        {metaHasContent ? (
-          <div
-            style={{
-              fontFamily: "var(--font-manrope)",
-              fontSize: 12,
-              color: "#999999",
-              lineHeight: "1.2em",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {director ? <span style={{ fontWeight: 600 }}>{director}</span> : null}
-            {director && year ? <span style={{ fontWeight: 500 }}>{" • "}</span> : null}
-            {year ? <span style={{ fontWeight: 500 }}>{year}</span> : null}
-          </div>
-        ) : null}
-      </div>
-
-      <RightChevron />
-    </div>
-  );
-}
-
-function SimpleResultCard({ title, meta }) {
-  return (
-    <div
-      style={{
-        height: 80,
-        background: "#FFFFFF",
-        borderRadius: 6,
-        padding: "8px 12px 8px 8px",
-        boxSizing: "border-box",
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-      }}
-    >
-      {/* left spacer to align with poster column */}
-      <div style={{ width: 48, height: 64, flex: "0 0 auto" }} />
-
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          minWidth: 0,
-          flex: 1,
-          marginLeft: 12,
-          marginRight: 12,
-        }}
-      >
+      {meta ? (
         <div
           style={{
             fontFamily: "var(--font-manrope)",
-            fontSize: 16,
-            fontWeight: 700,
-            color: "#444444",
-            lineHeight: "12px",
-            height: 16,
-            paddingTop: 2,
-            boxSizing: "border-box",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            minWidth: 0,
+            fontSize: 13,
+            fontWeight: 500,
+            color: "#999999",
+            marginTop: 6,
           }}
-          title={title}
         >
-          {title}
+          {meta}
         </div>
-
-        {meta ? (
-          <div
-            style={{
-              fontFamily: "var(--font-manrope)",
-              fontSize: 12,
-              color: "#999999",
-              lineHeight: "1.2em",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            <span style={{ fontWeight: 500 }}>{meta}</span>
-          </div>
-        ) : null}
-      </div>
-
-      <RightChevron />
+      ) : null}
     </div>
   );
 }
 
 /* -----------------------------
-   Page
+   Page (v9 + search swap)
 ------------------------------ */
 export default function Home() {
   const isMobile = useIsMobile(480);
 
+  // ✅ V7 search behaviour (as in v9)
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  // ✅ Search query (drives poster/results swap)
   const [query, setQuery] = useState("");
 
+  // ✅ Scroll FX: stroke fades in over 12px; background fades out over 24px
   const [scrollFx, setScrollFx] = useState({ stroke: 0, bg: 0 });
   const rafRef = useRef(null);
 
+  // ✅ Films loaded from /public/films/index.json and /public/films/<id>/film.json
   const [films, setFilms] = useState([]);
-
-  // Animate results ONLY when entering search mode (empty -> non-empty).
-  const [resultsEnterKey, setResultsEnterKey] = useState(0);
-  const prevShowResultsRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -594,18 +364,16 @@ export default function Home() {
             return {
               ...data,
               id: data?.id || id,
-              title: data?.title || id,
               poster: `/films/${id}/cover.webp`,
               backdrop: `/films/${id}/backdrop.webp`,
               stamps: Number.isFinite(data?.stamps) ? data.stamps : 0,
               country: typeof data?.country === "string" ? data.country.toLowerCase() : undefined,
-              director: data?.director,
-              year: data?.year,
             };
           })
         );
 
         const ok = results.filter((r) => r.status === "fulfilled").map((r) => r.value);
+
         if (!cancelled) setFilms(ok);
       } catch {
         if (!cancelled) setFilms([]);
@@ -618,11 +386,14 @@ export default function Home() {
     };
   }, []);
 
+  // ✅ Header backdrop fixed (NOT dynamic)
   const headerBackdropSrc = "/films/spirited-away/backdrop.webp";
 
+  // ✅ keep nav sizing: 48 button + (6 top + 12 bottom) = 66
   const NAV_BUTTON_H = 48;
-  const NAV_H = NAV_BUTTON_H + 18;
+  const NAV_H = NAV_BUTTON_H + 18; // 66
 
+  // Header geometry (safe-area aware) — unchanged
   const SAFE_TOP = "env(safe-area-inset-top)";
   const SAFE_BREATH = 28;
   const LOGO_H = 48;
@@ -630,11 +401,15 @@ export default function Home() {
   const SEARCH_H = 48;
 
   const HEADER_TOTAL = `calc(${SAFE_TOP} + ${SAFE_BREATH + LOGO_H + SEARCH_TOP + SEARCH_H}px)`;
+
+  // Extended plate (v9): bottom sits 12px lower than header
   const PLATE_EXTEND = 12;
   const HEADER_PLATE_H = `calc(${HEADER_TOTAL} + ${PLATE_EXTEND}px)`;
 
+  // Canonical hero render height — unchanged
   const HERO_H = `calc(420px + ${SAFE_TOP})`;
 
+  // HERO treatment — unchanged
   const HERO_POS = "center top";
   const HERO_OPACITY = 1;
   const HERO_DARKEN = "rgba(13, 13, 13, 0.20)";
@@ -686,8 +461,8 @@ export default function Home() {
   function handleScroll(e) {
     const el = e.currentTarget;
 
-    const STROKE_RANGE = 12;
-    const BG_RANGE = 24;
+    const STROKE_RANGE = 12; // stroke appears over 12px
+    const BG_RANGE = 24; // background disappears over 24px
 
     const stroke = Math.max(0, Math.min(1, el.scrollTop / STROKE_RANGE));
     const bg = Math.max(0, Math.min(1, el.scrollTop / BG_RANGE));
@@ -696,9 +471,14 @@ export default function Home() {
     rafRef.current = requestAnimationFrame(() => setScrollFx({ stroke, bg }));
   }
 
-  const strokeColor = `rgba(68, 68, 68, ${scrollFx.stroke})`;
+  // 1px stroke with alpha (no layout shift)
+  const strokeColor = `rgba(68, 68, 68, ${scrollFx.stroke})`; // #444444
+  // Background hero fades out more gradually (24px)
   const backgroundHeroOpacity = 1 - scrollFx.bg;
 
+  /* -----------------------------
+     Sample non-film data (swap to JSON later)
+  ------------------------------ */
   const recipesData = useMemo(
     () => [
       { id: "devilled-eggs", title: "Devilled Eggs", meta: "Recipe" },
@@ -715,6 +495,9 @@ export default function Home() {
     []
   );
 
+  /* -----------------------------
+     Search results
+  ------------------------------ */
   const q = normalizeForSearch(query);
 
   const filmResults = useMemo(() => {
@@ -743,12 +526,6 @@ export default function Home() {
 
   const showResults = q.length > 0;
 
-  useEffect(() => {
-    const prev = prevShowResultsRef.current;
-    if (showResults && !prev) setResultsEnterKey((k) => k + 1);
-    prevShowResultsRef.current = showResults;
-  }, [showResults]);
-
   return (
     <div
       style={{
@@ -775,7 +552,7 @@ export default function Home() {
           borderRadius: 0,
         }}
       >
-        {/* Backdrop layer */}
+        {/* Backdrop layer (canonical hero render) */}
         <div
           style={{
             position: "absolute",
@@ -813,7 +590,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Scroller */}
+        {/* Full-height native scroller */}
         <div
           onScroll={handleScroll}
           style={{
@@ -828,10 +605,12 @@ export default function Home() {
             boxSizing: "border-box",
           }}
         >
+          {/* Spacer below header — unchanged */}
           <div style={{ height: HEADER_TOTAL }} />
 
           <div style={{ paddingLeft: 12, paddingRight: 12, boxSizing: "border-box" }}>
             {!showResults ? (
+              // Default: posters grid
               <div style={gridStyle}>
                 {films.map((film) => (
                   <div key={film.id} style={tileStyle}>
@@ -845,70 +624,58 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <div style={{ marginTop: 24 }}>
-                <motion.div
-                  key={resultsEnterKey}
-                  initial="hidden"
-                  animate="show"
-                  variants={resultsContainerVariants}
-                  style={{ display: "flex", flexDirection: "column", gap: 40 }}
-                >
-                  {filmResults.length > 0 && (
-                    <Section title="Films">
-                      {filmResults.map((f) => (
-                        <motion.div key={f.id} variants={cardVariants}>
-                          <FilmResultCard film={f} />
-                        </motion.div>
-                      ))}
-                    </Section>
-                  )}
+              // Search mode: results replace posters
+              <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 18 }}>
+                {filmResults.length > 0 && (
+                  <Section title="Films">
+                    {filmResults.map((f) => (
+                      <ResultCard
+                        key={f.id}
+                        eyebrow="Film"
+                        title={f.title}
+                        meta={`${f.year ?? ""}${f.director ? ` · ${f.director}` : ""}`}
+                      />
+                    ))}
+                  </Section>
+                )}
 
-                  {recipeResults.length > 0 && (
-                    <Section title="Recipes">
-                      {recipeResults.map((r) => (
-                        <motion.div key={r.id} variants={cardVariants}>
-                          <SimpleResultCard title={r.title} meta={r.meta} />
-                        </motion.div>
-                      ))}
-                    </Section>
-                  )}
+                {recipeResults.length > 0 && (
+                  <Section title="Recipes">
+                    {recipeResults.map((r) => (
+                      <ResultCard key={r.id} eyebrow="Recipe" title={r.title} meta={r.meta} />
+                    ))}
+                  </Section>
+                )}
 
-                  {ingredientResults.length > 0 && (
-                    <Section title="Ingredients">
-                      {ingredientResults.map((i) => (
-                        <motion.div key={i.id} variants={cardVariants}>
-                          <SimpleResultCard title={i.title} meta={i.meta} />
-                        </motion.div>
-                      ))}
-                    </Section>
-                  )}
+                {ingredientResults.length > 0 && (
+                  <Section title="Ingredients">
+                    {ingredientResults.map((i) => (
+                      <ResultCard key={i.id} eyebrow="Ingredient" title={i.title} meta={i.meta} />
+                    ))}
+                  </Section>
+                )}
 
-                  {filmResults.length === 0 &&
-                    recipeResults.length === 0 &&
-                    ingredientResults.length === 0 && (
-                      <motion.div variants={cardVariants}>
-                        <div
-                          style={{
-                            borderRadius: 6,
-                            background: "#FFFFFF",
-                            padding: 12,
-                            color: "#444444",
-                            fontFamily: "var(--font-manrope)",
-                            fontSize: 14,
-                            lineHeight: "1.4em",
-                          }}
-                        >
-                          No results for “{query.trim()}”.
-                        </div>
-                      </motion.div>
-                    )}
-                </motion.div>
+                {filmResults.length === 0 && recipeResults.length === 0 && ingredientResults.length === 0 && (
+                  <div
+                    style={{
+                      borderRadius: 12,
+                      border: "1px solid #444444",
+                      padding: 14,
+                      color: "#999999",
+                      fontFamily: "var(--font-manrope)",
+                      fontSize: 14,
+                      lineHeight: "1.4em",
+                    }}
+                  >
+                    No results for “{query.trim()}”.
+                  </div>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        {/* Header plate */}
+        {/* Header plate: window onto SAME hero render (no fade) + gradual stroke reveal */}
         <div
           style={{
             position: "absolute",
@@ -947,7 +714,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Header overlay */}
+        {/* Header overlay (unchanged) */}
         <div
           style={{
             position: "absolute",
@@ -963,13 +730,21 @@ export default function Home() {
         >
           <div style={{ height: `calc(${SAFE_TOP} + ${SAFE_BREATH}px)` }} />
 
-          <div style={{ height: LOGO_H, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div
+            style={{
+              height: LOGO_H,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <img src="/logo.svg" alt="Seconds" style={{ height: 28, width: "auto" }} />
           </div>
 
-          {/* Search bar */}
+          {/* ✅ V7 SEARCH BAR (verbatim) + controlled value */}
           <div style={{ paddingTop: SEARCH_TOP, display: "flex", alignItems: "center" }}>
             <div style={{ position: "relative", width: "100%", pointerEvents: "auto" }}>
+              {/* Left icon */}
               <div
                 style={{
                   position: "absolute",
@@ -982,12 +757,13 @@ export default function Home() {
                   alignItems: "center",
                   justifyContent: "center",
                   pointerEvents: "none",
-                  color: "#444444",
+                  color: "#444444", // icon-search.svg
                 }}
               >
                 <SearchIcon width={16} height={16} aria-hidden="true" focusable="false" style={{ display: "block" }} />
               </div>
 
+              {/* Right icon */}
               <div
                 style={{
                   position: "absolute",
@@ -1000,7 +776,7 @@ export default function Home() {
                   alignItems: "center",
                   justifyContent: "center",
                   pointerEvents: "none",
-                  color: "#999999",
+                  color: "#999999", // icon-filter.svg
                 }}
               >
                 <FilterIcon width={16} height={16} aria-hidden="true" focusable="false" style={{ display: "block" }} />
@@ -1024,17 +800,24 @@ export default function Home() {
                   backgroundColor: "white",
                   outline: "none",
                   boxSizing: "border-box",
+
+                  // typed text
                   color: "#444444",
+
                   fontWeight: 500,
-                  fontSize: 16,
+                  fontSize: 16, // prevents iOS zoom
                   fontFamily: "var(--font-manrope)",
                   lineHeight: "1.4em",
                   letterSpacing: "0em",
+
+                  // 16 (left edge) + 16 (icon) + 12 (gap)
                   paddingLeft: 44,
+                  // 16 (right edge) + 16 (icon)
                   paddingRight: 32,
                 }}
               />
 
+              {/* Placeholder styling */}
               <style jsx>{`
                 .secondsSearch::placeholder {
                   color: #999999;
