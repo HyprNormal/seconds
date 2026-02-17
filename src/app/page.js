@@ -41,7 +41,7 @@ const resultsContainerVariants = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.03, // extremely subtle
+      staggerChildren: 0.03,
       delayChildren: 0.02,
     },
   },
@@ -418,8 +418,8 @@ function FilmResultCard({ film }) {
           gap: 12,
           minWidth: 0,
           flex: 1,
-          marginLeft: 12, // poster -> text
-          marginRight: 12, // text -> icon
+          marginLeft: 12,
+          marginRight: 12,
         }}
       >
         {/* Title row + flag */}
@@ -502,7 +502,6 @@ function SimpleResultCard({ title, meta }) {
         alignItems: "center",
       }}
     >
-      {/* left spacer to align with poster column */}
       <div style={{ width: 48, height: 64, flex: "0 0 auto" }} />
 
       <div
@@ -643,29 +642,11 @@ export default function Home() {
 
   const tileStyle = { display: "flex", flexDirection: "column", gap: 12 };
 
-  const stampsRowStyle = {
-    height: 16,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-  };
+  const stampsRowStyle = { height: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 };
 
-  const stampStyle = {
-    width: 16,
-    height: 16,
-    borderRadius: 999,
-    backgroundColor: "#0D0D0D",
-    boxShadow: "inset 0 0 0 2px #FFFFFF",
-  };
+  const stampStyle = { width: 16, height: 16, borderRadius: 999, backgroundColor: "#0D0D0D", boxShadow: "inset 0 0 0 2px #FFFFFF" };
 
-  const gridStyle = {
-    display: "grid",
-    marginTop: 24,
-    gridTemplateColumns: "repeat(3, 1fr)",
-    columnGap: 8,
-    rowGap: 24,
-  };
+  const gridStyle = { display: "grid", marginTop: 24, gridTemplateColumns: "repeat(3, 1fr)", columnGap: 8, rowGap: 24 };
 
   const bottomNavStyle = {
     position: "absolute",
@@ -750,84 +731,18 @@ export default function Home() {
   }, [showResults]);
 
   return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100dvh",
-        background: isMobile ? "#0D0D0D" : "#FFFFFF",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          width: isMobile ? "100vw" : 420,
-          height: isMobile ? "100dvh" : 874,
-          overflow: "hidden",
-          margin: isMobile ? 0 : "0 auto",
-          boxSizing: "border-box",
-          backgroundColor: "#0D0D0D",
-          display: "flex",
-          flexDirection: "column",
-          position: "relative",
-          borderRadius: 0,
-        }}
-      >
-        {/* Backdrop layer */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: HERO_H,
-            zIndex: 0,
-            pointerEvents: "none",
-            overflow: "hidden",
-            opacity: backgroundHeroOpacity,
-          }}
-        >
+    <div style={{ width: "100vw", height: "100dvh", background: isMobile ? "#0D0D0D" : "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+      <div style={{ width: isMobile ? "100vw" : 420, height: isMobile ? "100dvh" : 874, overflow: "hidden", margin: isMobile ? 0 : "0 auto", boxSizing: "border-box", backgroundColor: "#0D0D0D", display: "flex", flexDirection: "column", position: "relative", borderRadius: 0 }}>
+        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: HERO_H, zIndex: 0, pointerEvents: "none", overflow: "hidden", opacity: backgroundHeroOpacity }}>
           <div style={{ position: "absolute", inset: 0, height: HERO_H }}>
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                backgroundImage: `url(${headerBackdropSrc})`,
-                backgroundSize: "cover",
-                backgroundPosition: HERO_POS,
-                opacity: HERO_OPACITY,
-              }}
-            />
+            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${headerBackdropSrc})`, backgroundSize: "cover", backgroundPosition: HERO_POS, opacity: HERO_OPACITY }} />
             <div style={{ position: "absolute", inset: 0, background: HERO_DARKEN }} />
             <div style={{ position: "absolute", inset: 0, background: HERO_TINT }} />
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                opacity: HERO_GRADIENT_OPACITY,
-                background: "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
-              }}
-            />
+            <div style={{ position: "absolute", inset: 0, opacity: HERO_GRADIENT_OPACITY, background: "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)" }} />
           </div>
         </div>
 
-        {/* Scroller */}
-        <div
-          onScroll={handleScroll}
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 1,
-            overflowY: "auto",
-            overflowX: "hidden",
-            WebkitOverflowScrolling: "touch",
-            overscrollBehavior: "contain",
-            paddingBottom: NAV_H + 16,
-            boxSizing: "border-box",
-          }}
-        >
+        <div onScroll={handleScroll} style={{ position: "absolute", inset: 0, zIndex: 1, overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", paddingBottom: NAV_H + 16, boxSizing: "border-box" }}>
           <div style={{ height: HEADER_TOTAL }} />
 
           <div style={{ paddingLeft: 12, paddingRight: 12, boxSizing: "border-box" }}>
@@ -883,126 +798,52 @@ export default function Home() {
                     </Section>
                   )}
 
-                  {filmResults.length === 0 &&
-                    recipeResults.length === 0 &&
-                    ingredientResults.length === 0 && (
-                      <motion.div variants={cardVariants}>
-                        <div
-                          style={{
-                            borderRadius: 6,
-                            background: "#FFFFFF",
-                            padding: 12,
-                            color: "#444444",
-                            fontFamily: "var(--font-manrope)",
-                            fontSize: 14,
-                            lineHeight: "1.4em",
-                          }}
-                        >
-                          No results for “{query.trim()}”.
-                        </div>
-                      </motion.div>
-                    )}
+                  {filmResults.length === 0 && recipeResults.length === 0 && ingredientResults.length === 0 && (
+                    <motion.div variants={cardVariants}>
+                      <div
+                        style={{
+                          borderRadius: 6,
+                          background: "#FFFFFF",
+                          padding: 12,
+                          color: "#444444",
+                          fontFamily: "var(--font-manrope)",
+                          fontSize: 14,
+                          lineHeight: "1.4em",
+                        }}
+                      >
+                        No results for “{query.trim()}”.
+                      </div>
+                    </motion.div>
+                  )}
                 </motion.div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Header plate */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: HEADER_PLATE_H,
-            zIndex: 15,
-            pointerEvents: "none",
-            overflow: "hidden",
-            borderBottom: `1px solid ${strokeColor}`,
-            boxSizing: "border-box",
-          }}
-        >
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: HEADER_PLATE_H, zIndex: 15, pointerEvents: "none", overflow: "hidden", borderBottom: `1px solid ${strokeColor}`, boxSizing: "border-box" }}>
           <div style={{ position: "absolute", inset: 0, height: HERO_H }}>
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                backgroundImage: `url(${headerBackdropSrc})`,
-                backgroundSize: "cover",
-                backgroundPosition: HERO_POS,
-                opacity: HERO_OPACITY,
-              }}
-            />
+            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${headerBackdropSrc})`, backgroundSize: "cover", backgroundPosition: HERO_POS, opacity: HERO_OPACITY }} />
             <div style={{ position: "absolute", inset: 0, background: HERO_DARKEN }} />
             <div style={{ position: "absolute", inset: 0, background: HERO_TINT }} />
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                opacity: HERO_GRADIENT_OPACITY,
-                background: "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
-              }}
-            />
+            <div style={{ position: "absolute", inset: 0, opacity: HERO_GRADIENT_OPACITY, background: "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)" }} />
           </div>
         </div>
 
-        {/* Header overlay */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 20,
-            paddingLeft: 12,
-            paddingRight: 12,
-            boxSizing: "border-box",
-            pointerEvents: "none",
-          }}
-        >
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 20, paddingLeft: 12, paddingRight: 12, boxSizing: "border-box", pointerEvents: "none" }}>
           <div style={{ height: `calc(${SAFE_TOP} + ${SAFE_BREATH}px)` }} />
 
           <div style={{ height: LOGO_H, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <img src="/logo.svg" alt="Seconds" style={{ height: 28, width: "auto" }} />
           </div>
 
-          {/* Search bar */}
           <div style={{ paddingTop: SEARCH_TOP, display: "flex", alignItems: "center" }}>
             <div style={{ position: "relative", width: "100%", pointerEvents: "auto" }}>
-              <div
-                style={{
-                  position: "absolute",
-                  left: 16,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: 16,
-                  height: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  pointerEvents: "none",
-                  color: "#444444",
-                }}
-              >
+              <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", color: "#444444" }}>
                 <SearchIcon width={16} height={16} aria-hidden="true" focusable="false" style={{ display: "block" }} />
               </div>
 
-              <div
-                style={{
-                  position: "absolute",
-                  right: 16,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: 16,
-                  height: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  pointerEvents: "none",
-                  color: "#999999",
-                }}
-              >
+              <div style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", color: "#999999" }}>
                 <FilterIcon width={16} height={16} aria-hidden="true" focusable="false" style={{ display: "block" }} />
               </div>
 
@@ -1010,7 +851,7 @@ export default function Home() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={isSearchFocused ? "" : "Search films, dishes, ingredients"}
+                placeholder="Search films, dishes, ingredients"
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => {
                   if (!query.trim()) setIsSearchFocused(false);
@@ -1028,10 +869,17 @@ export default function Home() {
                   fontWeight: 500,
                   fontSize: 16,
                   fontFamily: "var(--font-manrope)",
-                  lineHeight: "1.4em",
                   letterSpacing: "0em",
                   paddingLeft: 44,
                   paddingRight: 32,
+
+                  // iOS focus stability
+                  WebkitAppearance: "none",
+                  appearance: "none",
+                  boxShadow: "none",
+                  paddingTop: 0,
+                  paddingBottom: 0,
+                  lineHeight: `${SEARCH_H}px`,
                 }}
               />
 
