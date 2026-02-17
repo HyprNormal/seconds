@@ -847,48 +847,57 @@ export default function Home() {
                 <FilterIcon width={16} height={16} aria-hidden="true" focusable="false" style={{ display: "block" }} />
               </div>
 
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search films, dishes, ingredients"
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => {
-                  if (!query.trim()) setIsSearchFocused(false);
-                }}
-                className="secondsSearch"
-                style={{
-                  width: "100%",
-                  height: SEARCH_H,
-                  borderRadius: 24,
-                  border: "0",
-                  backgroundColor: "white",
-                  outline: "none",
-                  boxSizing: "border-box",
-                  color: "#444444",
-                  fontWeight: 500,
-                  fontSize: 16,
-                  fontFamily: "var(--font-manrope)",
-                  letterSpacing: "0em",
-                  paddingLeft: 44,
-                  paddingRight: 32,
+             <input
+  type="text"
+  value={query}
+  onChange={(e) => setQuery(e.target.value)}
+  placeholder="Search films, dishes, ingredients"
+  onFocus={() => setIsSearchFocused(true)}
+  onBlur={() => {
+    if (!query.trim()) setIsSearchFocused(false);
+  }}
+  className="secondsSearch"
+  style={{
+    width: "100%",
+    height: SEARCH_H,
+    borderRadius: 24,
+    border: "0",
+    backgroundColor: "white",
+    outline: "none",
+    boxSizing: "border-box",
+    color: "#444444",
+    fontWeight: 500,
+    fontSize: 16,
+    fontFamily: "var(--font-manrope)",
+    letterSpacing: "0em",
+    paddingLeft: 44,
+    paddingRight: 32,
 
-                  // iOS focus stability
-                  WebkitAppearance: "none",
-                  appearance: "none",
-                  boxShadow: "none",
-                  paddingTop: 0,
-                  paddingBottom: 0,
-                  lineHeight: `${SEARCH_H}px`,
-                }}
-              />
+    // iOS focus stability (keep these)
+    WebkitAppearance: "none",
+    appearance: "none",
+    boxShadow: "none",
 
-              <style jsx>{`
-                .secondsSearch::placeholder {
-                  color: #999999;
-                  opacity: 1;
-                }
-              `}</style>
+    // Normal vertical metrics (prevents mobile jump)
+    lineHeight: "20px",
+    paddingTop: 14,
+    paddingBottom: 14,
+  }}
+/>
+
+<style jsx>{`
+  .secondsSearch::placeholder {
+    color: #999999;
+    opacity: 1;
+    transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .secondsSearch:focus::placeholder {
+    opacity: 0;
+  }
+`}
+
+</style>
             </div>
           </div>
         </div>
