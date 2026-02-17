@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -102,20 +101,15 @@ function Poster({ src, country }) {
         style={{
           position: "absolute",
           inset: 0,
+          backgroundImage: `url(${src})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
           transformOrigin: "center",
         }}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 1.05 }}
         transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <Image
-          src={src}
-          alt=""
-          fill
-          sizes="(max-width: 480px) 33vw, 140px"
-          style={{ objectFit: "cover", objectPosition: "center" }}
-        />
-      </motion.div>
+      />
 
       {Flag && (
         <div
@@ -408,12 +402,14 @@ function FilmResultCard({ film }) {
           background: "#EEEEEE",
         }}
       >
-        <Image
-          src={film.poster}
-          alt=""
-          fill
-          sizes="48px"
-          style={{ objectFit: "cover", objectPosition: "center" }}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `url(${film.poster})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
         />
       </div>
 
@@ -661,9 +657,7 @@ export default function Home() {
   const SEARCH_TOP = 24;
   const SEARCH_H = 48;
 
-  const HEADER_TOTAL = `calc(${SAFE_TOP} + ${
-    SAFE_BREATH + LOGO_H + SEARCH_TOP + SEARCH_H
-  }px)`;
+  const HEADER_TOTAL = `calc(${SAFE_TOP} + ${SAFE_BREATH + LOGO_H + SEARCH_TOP + SEARCH_H}px)`;
   const PLATE_EXTEND = 12;
   const HEADER_PLATE_H = `calc(${HEADER_TOTAL} + ${PLATE_EXTEND}px)`;
 
@@ -824,15 +818,13 @@ export default function Home() {
           }}
         >
           <div style={{ position: "absolute", inset: 0, height: HERO_H }}>
-            <Image
-              src={headerBackdropSrc}
-              alt=""
-              fill
-              priority
-              sizes="(max-width: 480px) 100vw, 420px"
+            <div
               style={{
-                objectFit: "cover",
-                objectPosition: HERO_POS,
+                position: "absolute",
+                inset: 0,
+                backgroundImage: `url(${headerBackdropSrc})`,
+                backgroundSize: "cover",
+                backgroundPosition: HERO_POS,
                 opacity: HERO_OPACITY,
               }}
             />
@@ -843,8 +835,7 @@ export default function Home() {
                 position: "absolute",
                 inset: 0,
                 opacity: HERO_GRADIENT_OPACITY,
-                background:
-                  "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
+                background: "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
               }}
             />
           </div>
@@ -961,14 +952,13 @@ export default function Home() {
           }}
         >
           <div style={{ position: "absolute", inset: 0, height: HERO_H }}>
-            <Image
-              src={headerBackdropSrc}
-              alt=""
-              fill
-              sizes="(max-width: 480px) 100vw, 420px"
+            <div
               style={{
-                objectFit: "cover",
-                objectPosition: HERO_POS,
+                position: "absolute",
+                inset: 0,
+                backgroundImage: `url(${headerBackdropSrc})`,
+                backgroundSize: "cover",
+                backgroundPosition: HERO_POS,
                 opacity: HERO_OPACITY,
               }}
             />
@@ -979,8 +969,7 @@ export default function Home() {
                 position: "absolute",
                 inset: 0,
                 opacity: HERO_GRADIENT_OPACITY,
-                background:
-                  "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
+                background: "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
               }}
             />
           </div>
@@ -1010,14 +999,7 @@ export default function Home() {
               justifyContent: "center",
             }}
           >
-            <Image
-              src="/logo.svg"
-              alt="Seconds"
-              width={120}
-              height={28}
-              priority
-              style={{ height: 28, width: "auto" }}
-            />
+            <img src="/logo.svg" alt="Seconds" style={{ height: 28, width: "auto" }} />
           </div>
 
           {/* Search bar */}
