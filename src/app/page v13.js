@@ -112,6 +112,7 @@ function Poster({ src, country }) {
           src={src}
           alt=""
           fill
+          // Keep the exact same layout box; only hint smaller effective size.
           sizes="(max-width: 480px) 34vw, 160px"
           quality={55}
           loading="lazy"
@@ -398,6 +399,7 @@ function FilmResultCard({ film }) {
         alignItems: "center",
       }}
     >
+      {/* Poster */}
       <div
         style={{
           width: 48,
@@ -420,6 +422,7 @@ function FilmResultCard({ film }) {
         />
       </div>
 
+      {/* Text column */}
       <div
         style={{
           display: "flex",
@@ -427,20 +430,23 @@ function FilmResultCard({ film }) {
           gap: 12,
           minWidth: 0,
           flex: 1,
-          marginLeft: 12,
-          marginRight: 12,
+          marginLeft: 12, // poster -> text
+          marginRight: 12, // text -> icon
         }}
       >
+        {/* Title rail (12px) + flag */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             height: 12,
             minWidth: 0,
-            overflow: "visible",
+            overflow: "visible", // allow glyphs to paint outside rail
           }}
         >
+          {/* Clipper: clips horizontally only */}
           <div style={{ minWidth: 0, flex: "0 1 auto", overflow: "hidden" }}>
+            {/* Text: real line box; no vertical clipping */}
             <div
               style={{
                 fontFamily: "var(--font-manrope)",
@@ -464,7 +470,7 @@ function FilmResultCard({ film }) {
               style={{
                 width: 12,
                 height: 12,
-                marginLeft: 8,
+                marginLeft: 8, // ✅ 8px from title
                 flex: "0 0 auto",
                 display: "flex",
                 alignItems: "center",
@@ -477,6 +483,7 @@ function FilmResultCard({ film }) {
           )}
         </div>
 
+        {/* Director • Year */}
         {metaHasContent ? (
           <div
             style={{
@@ -515,6 +522,7 @@ function SimpleResultCard({ title, meta }) {
         alignItems: "center",
       }}
     >
+      {/* left spacer to align with poster column */}
       <div style={{ width: 48, height: 64, flex: "0 0 auto" }} />
 
       <div
@@ -528,6 +536,7 @@ function SimpleResultCard({ title, meta }) {
           marginRight: 12,
         }}
       >
+        {/* Title rail (12px) */}
         <div
           style={{
             display: "flex",
@@ -537,6 +546,7 @@ function SimpleResultCard({ title, meta }) {
             overflow: "visible",
           }}
         >
+          {/* Clipper: clips horizontally only */}
           <div style={{ minWidth: 0, flex: "1 1 auto", overflow: "hidden" }}>
             <div
               style={{
@@ -593,16 +603,9 @@ export default function Home() {
 
   const [films, setFilms] = useState([]);
 
-  // ✅ scroller ref (for scroll reset)
-  const scrollerRef = useRef(null);
-
   // Animate results ONLY when entering search mode (empty -> non-empty).
   const [resultsEnterKey, setResultsEnterKey] = useState(0);
   const prevShowResultsRef = useRef(false);
-  const prevHadAnyResultsRef = useRef(false);
-
-  // ✅ track query length to detect "broadening" on backspace
-  const prevQLenRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -777,41 +780,11 @@ export default function Home() {
 
   const showResults = q.length > 0;
 
-  const hasAnyResults =
-    filmResults.length > 0 || recipeResults.length > 0 || ingredientResults.length > 0;
-
-  // ✅ FIX 1: entering search mode still triggers animation
   useEffect(() => {
-    const prevShow = prevShowResultsRef.current;
-    if (showResults && !prevShow) setResultsEnterKey((k) => k + 1);
+    const prev = prevShowResultsRef.current;
+    if (showResults && !prev) setResultsEnterKey((k) => k + 1);
     prevShowResultsRef.current = showResults;
   }, [showResults]);
-
-  // ✅ FIX 2: going from 0 results -> some results triggers animation
-  useEffect(() => {
-    const prevHad = prevHadAnyResultsRef.current;
-    if (showResults && hasAnyResults && !prevHad) {
-      setResultsEnterKey((k) => k + 1);
-    }
-    prevHadAnyResultsRef.current = hasAnyResults;
-  }, [showResults, hasAnyResults]);
-
-  // ✅ FIX 3: broadening query (backspace) triggers animation/remount
-  useEffect(() => {
-    const prevLen = prevQLenRef.current;
-    if (showResults && q.length > 0 && q.length < prevLen) {
-      setResultsEnterKey((k) => k + 1);
-    }
-    prevQLenRef.current = q.length;
-  }, [showResults, q]);
-
-  // ✅ FIX 4: prevent "Big Night moves down" by resetting scroll on query changes in search mode
-  useEffect(() => {
-    if (!showResults) return;
-    const el = scrollerRef.current;
-    if (!el) return;
-    el.scrollTop = 0;
-  }, [showResults, q]);
 
   return (
     <div
@@ -882,7 +855,6 @@ export default function Home() {
 
         {/* Scroller */}
         <div
-          ref={scrollerRef}
           onScroll={handleScroll}
           style={{
             position: "absolute",
@@ -996,6 +968,7 @@ export default function Home() {
               src={headerBackdropSrc}
               alt=""
               fill
+              // This is the duplicated hero; make it explicitly non-priority.
               priority={false}
               loading="lazy"
               quality={60}
@@ -1033,11 +1006,11 @@ export default function Home() {
             pointerEvents: "none",
           }}
         >
-          <div style={{ height: `calc(env(safe-area-inset-top) + 28px)` }} />
+          <div style={{ height: `calc(${SAFE_TOP} + ${SAFE_BREATH}px)` }} />
 
           <div
             style={{
-              height: 48,
+              height: LOGO_H,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -1053,7 +1026,8 @@ export default function Home() {
             />
           </div>
 
-          <div style={{ paddingTop: 24, display: "flex", alignItems: "center" }}>
+          {/* Search bar */}
+          <div style={{ paddingTop: SEARCH_TOP, display: "flex", alignItems: "center" }}>
             <div style={{ position: "relative", width: "100%", pointerEvents: "auto" }}>
               <div
                 style={{
@@ -1070,7 +1044,13 @@ export default function Home() {
                   color: "#444444",
                 }}
               >
-                <SearchIcon width={16} height={16} aria-hidden="true" focusable="false" />
+                <SearchIcon
+                  width={16}
+                  height={16}
+                  aria-hidden="true"
+                  focusable="false"
+                  style={{ display: "block" }}
+                />
               </div>
 
               <div
@@ -1088,7 +1068,13 @@ export default function Home() {
                   color: "#999999",
                 }}
               >
-                <FilterIcon width={16} height={16} aria-hidden="true" focusable="false" />
+                <FilterIcon
+                  width={16}
+                  height={16}
+                  aria-hidden="true"
+                  focusable="false"
+                  style={{ display: "block" }}
+                />
               </div>
 
               <input
@@ -1103,7 +1089,7 @@ export default function Home() {
                 className="secondsSearch"
                 style={{
                   width: "100%",
-                  height: 48,
+                  height: SEARCH_H,
                   borderRadius: 24,
                   border: "0",
                   backgroundColor: "white",
@@ -1116,9 +1102,13 @@ export default function Home() {
                   letterSpacing: "0em",
                   paddingLeft: 44,
                   paddingRight: 32,
+
+                  // iOS focus stability
                   WebkitAppearance: "none",
                   appearance: "none",
                   boxShadow: "none",
+
+                  // normal text metrics (stable)
                   lineHeight: "20px",
                   paddingTop: 14,
                   paddingBottom: 14,
@@ -1139,23 +1129,7 @@ export default function Home() {
           </div>
         </div>
 
-        <BottomNav
-          bottomNavStyle={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: 66,
-            background: "#0D0D0D",
-            borderTop: "1px solid #444444",
-            zIndex: 50,
-            boxSizing: "border-box",
-            paddingLeft: 24,
-            paddingRight: 24,
-            paddingTop: 6,
-            paddingBottom: 12,
-          }}
-        />
+        <BottomNav bottomNavStyle={bottomNavStyle} />
       </div>
     </div>
   );
