@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -37,7 +37,6 @@ import FlagDK from "@/icons/flags/flag-dk.svg";
 ------------------------------ */
 const EASE = [0.16, 1, 0.3, 1];
 const CARD_ENTER_MS = 180;
-const LEAVE_MS = 180;
 
 const resultsContainerVariants = {
   hidden: {},
@@ -585,7 +584,6 @@ function SimpleResultCard({ title, meta }) {
 ------------------------------ */
 export default function Home() {
   const isMobile = useIsMobile(480);
-  const router = useRouter();
 
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [query, setQuery] = useState("");
@@ -597,17 +595,6 @@ export default function Home() {
 
   // ✅ scroller ref (for scroll reset)
   const scrollerRef = useRef(null);
-
-  // ✅ leave animation state
-  const [leavingToFilmId, setLeavingToFilmId] = useState(null);
-
-  const openFilm = (filmId) => {
-    if (leavingToFilmId) return;
-    setLeavingToFilmId(filmId);
-    window.setTimeout(() => {
-      router.push(`/films/${filmId}`);
-    }, LEAVE_MS);
-  };
 
   // Animate results ONLY when entering search mode (empty -> non-empty).
   const [resultsEnterKey, setResultsEnterKey] = useState(0);
@@ -826,11 +813,6 @@ export default function Home() {
     el.scrollTop = 0;
   }, [showResults, q]);
 
-  const slideAwayMotion = {
-    animate: leavingToFilmId ? { x: "-110%" } : { x: 0 },
-    transition: { duration: LEAVE_MS / 1000, ease: EASE },
-  };
-
   return (
     <div
       style={{
@@ -898,120 +880,101 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Scroller (slides left) */}
-        <motion.div
-          {...slideAwayMotion}
+        {/* Scroller */}
+        <div
+          ref={scrollerRef}
+          onScroll={handleScroll}
           style={{
             position: "absolute",
             inset: 0,
             zIndex: 1,
-            willChange: "transform",
-            pointerEvents: leavingToFilmId ? "none" : "auto",
+            overflowY: "auto",
+            overflowX: "hidden",
+            WebkitOverflowScrolling: "touch",
+            overscrollBehavior: "contain",
+            paddingBottom: NAV_H + 16,
+            boxSizing: "border-box",
           }}
         >
-          <div
-            ref={scrollerRef}
-            onScroll={handleScroll}
-            style={{
-              position: "absolute",
-              inset: 0,
-              overflowY: "auto",
-              overflowX: "hidden",
-              WebkitOverflowScrolling: "touch",
-              overscrollBehavior: "contain",
-              paddingBottom: NAV_H + 16,
-              boxSizing: "border-box",
-            }}
-          >
-            <div style={{ height: HEADER_TOTAL }} />
+          <div style={{ height: HEADER_TOTAL }} />
 
-            <div style={{ paddingLeft: 12, paddingRight: 12, boxSizing: "border-box" }}>
-              {!showResults ? (
-                <div style={gridStyle}>
-                  {films.map((film) => (
-                    <div
-                      key={film.id}
-                      style={{ ...tileStyle, cursor: leavingToFilmId ? "default" : "pointer" }}
-                      onClick={() => openFilm(film.id)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") openFilm(film.id);
-                      }}
-                    >
-                      <Poster src={film.poster} country={film.country} />
-                      <div style={stampsRowStyle}>
-                        {Array.from({ length: film.stamps }).map((_, j) => (
-                          <div key={j} style={stampStyle} />
-                        ))}
-                      </div>
+          <div style={{ paddingLeft: 12, paddingRight: 12, boxSizing: "border-box" }}>
+            {!showResults ? (
+              <div style={gridStyle}>
+                {films.map((film) => (
+                  <div key={film.id} style={tileStyle}>
+                    <Poster src={film.poster} country={film.country} />
+                    <div style={stampsRowStyle}>
+                      {Array.from({ length: film.stamps }).map((_, j) => (
+                        <div key={j} style={stampStyle} />
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ marginTop: 24 }}>
-                  <motion.div
-                    key={resultsEnterKey}
-                    initial="hidden"
-                    animate="show"
-                    variants={resultsContainerVariants}
-                    style={{ display: "flex", flexDirection: "column", gap: 40 }}
-                  >
-                    {filmResults.length > 0 && (
-                      <Section title="Films">
-                        {filmResults.map((f) => (
-                          <motion.div key={f.id} variants={cardVariants}>
-                            <FilmResultCard film={f} />
-                          </motion.div>
-                        ))}
-                      </Section>
-                    )}
-
-                    {recipeResults.length > 0 && (
-                      <Section title="Recipes">
-                        {recipeResults.map((r) => (
-                          <motion.div key={r.id} variants={cardVariants}>
-                            <SimpleResultCard title={r.title} meta={r.meta} />
-                          </motion.div>
-                        ))}
-                      </Section>
-                    )}
-
-                    {ingredientResults.length > 0 && (
-                      <Section title="Ingredients">
-                        {ingredientResults.map((i) => (
-                          <motion.div key={i.id} variants={cardVariants}>
-                            <SimpleResultCard title={i.title} meta={i.meta} />
-                          </motion.div>
-                        ))}
-                      </Section>
-                    )}
-
-                    {filmResults.length === 0 &&
-                      recipeResults.length === 0 &&
-                      ingredientResults.length === 0 && (
-                        <motion.div variants={cardVariants}>
-                          <div
-                            style={{
-                              borderRadius: 6,
-                              background: "#FFFFFF",
-                              padding: 12,
-                              color: "#444444",
-                              fontFamily: "var(--font-manrope)",
-                              fontSize: 14,
-                              lineHeight: "1.4em",
-                            }}
-                          >
-                            No results for “{query.trim()}”.
-                          </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ marginTop: 24 }}>
+                <motion.div
+                  key={resultsEnterKey}
+                  initial="hidden"
+                  animate="show"
+                  variants={resultsContainerVariants}
+                  style={{ display: "flex", flexDirection: "column", gap: 40 }}
+                >
+                  {filmResults.length > 0 && (
+                    <Section title="Films">
+                      {filmResults.map((f) => (
+                        <motion.div key={f.id} variants={cardVariants}>
+                          <FilmResultCard film={f} />
                         </motion.div>
-                      )}
-                  </motion.div>
-                </div>
-              )}
-            </div>
+                      ))}
+                    </Section>
+                  )}
+
+                  {recipeResults.length > 0 && (
+                    <Section title="Recipes">
+                      {recipeResults.map((r) => (
+                        <motion.div key={r.id} variants={cardVariants}>
+                          <SimpleResultCard title={r.title} meta={r.meta} />
+                        </motion.div>
+                      ))}
+                    </Section>
+                  )}
+
+                  {ingredientResults.length > 0 && (
+                    <Section title="Ingredients">
+                      {ingredientResults.map((i) => (
+                        <motion.div key={i.id} variants={cardVariants}>
+                          <SimpleResultCard title={i.title} meta={i.meta} />
+                        </motion.div>
+                      ))}
+                    </Section>
+                  )}
+
+                  {filmResults.length === 0 &&
+                    recipeResults.length === 0 &&
+                    ingredientResults.length === 0 && (
+                      <motion.div variants={cardVariants}>
+                        <div
+                          style={{
+                            borderRadius: 6,
+                            background: "#FFFFFF",
+                            padding: 12,
+                            color: "#444444",
+                            fontFamily: "var(--font-manrope)",
+                            fontSize: 14,
+                            lineHeight: "1.4em",
+                          }}
+                        >
+                          No results for “{query.trim()}”.
+                        </div>
+                      </motion.div>
+                    )}
+                </motion.div>
+              </div>
+            )}
           </div>
-        </motion.div>
+        </div>
 
         {/* Header plate */}
         <div
@@ -1056,7 +1019,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Header overlay (logo stays; search bar slides left) */}
+        {/* Header overlay */}
         <div
           style={{
             position: "absolute",
@@ -1090,93 +1053,90 @@ export default function Home() {
             />
           </div>
 
-          <motion.div {...slideAwayMotion} style={{ willChange: "transform" }}>
-            <div style={{ paddingTop: 24, display: "flex", alignItems: "center" }}>
-              <div style={{ position: "relative", width: "100%", pointerEvents: "auto" }}>
-                <div
-                  style={{
-                    position: "absolute",
-                    left: 16,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    width: 16,
-                    height: 16,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    pointerEvents: "none",
-                    color: "#444444",
-                  }}
-                >
-                  <SearchIcon width={16} height={16} aria-hidden="true" focusable="false" />
-                </div>
-
-                <div
-                  style={{
-                    position: "absolute",
-                    right: 16,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    width: 16,
-                    height: 16,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    pointerEvents: "none",
-                    color: "#999999",
-                  }}
-                >
-                  <FilterIcon width={16} height={16} aria-hidden="true" focusable="false" />
-                </div>
-
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search films, dishes, ingredients"
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => {
-                    if (!query.trim()) setIsSearchFocused(false);
-                  }}
-                  className="secondsSearch"
-                  disabled={Boolean(leavingToFilmId)}
-                  style={{
-                    width: "100%",
-                    height: 48,
-                    borderRadius: 24,
-                    border: "0",
-                    backgroundColor: "white",
-                    outline: "none",
-                    boxSizing: "border-box",
-                    color: "#444444",
-                    fontWeight: 500,
-                    fontSize: 16,
-                    fontFamily: "var(--font-manrope)",
-                    letterSpacing: "0em",
-                    paddingLeft: 44,
-                    paddingRight: 32,
-                    WebkitAppearance: "none",
-                    appearance: "none",
-                    boxShadow: "none",
-                    lineHeight: "20px",
-                    paddingTop: 14,
-                    paddingBottom: 14,
-                  }}
-                />
-
-                <style jsx>{`
-                  .secondsSearch::placeholder {
-                    color: #999999;
-                    opacity: 1;
-                    transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1);
-                  }
-                  .secondsSearch:focus::placeholder {
-                    opacity: 0;
-                  }
-                `}</style>
+          <div style={{ paddingTop: 24, display: "flex", alignItems: "center" }}>
+            <div style={{ position: "relative", width: "100%", pointerEvents: "auto" }}>
+              <div
+                style={{
+                  position: "absolute",
+                  left: 16,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 16,
+                  height: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  pointerEvents: "none",
+                  color: "#444444",
+                }}
+              >
+                <SearchIcon width={16} height={16} aria-hidden="true" focusable="false" />
               </div>
+
+              <div
+                style={{
+                  position: "absolute",
+                  right: 16,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 16,
+                  height: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  pointerEvents: "none",
+                  color: "#999999",
+                }}
+              >
+                <FilterIcon width={16} height={16} aria-hidden="true" focusable="false" />
+              </div>
+
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search films, dishes, ingredients"
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => {
+                  if (!query.trim()) setIsSearchFocused(false);
+                }}
+                className="secondsSearch"
+                style={{
+                  width: "100%",
+                  height: 48,
+                  borderRadius: 24,
+                  border: "0",
+                  backgroundColor: "white",
+                  outline: "none",
+                  boxSizing: "border-box",
+                  color: "#444444",
+                  fontWeight: 500,
+                  fontSize: 16,
+                  fontFamily: "var(--font-manrope)",
+                  letterSpacing: "0em",
+                  paddingLeft: 44,
+                  paddingRight: 32,
+                  WebkitAppearance: "none",
+                  appearance: "none",
+                  boxShadow: "none",
+                  lineHeight: "20px",
+                  paddingTop: 14,
+                  paddingBottom: 14,
+                }}
+              />
+
+              <style jsx>{`
+                .secondsSearch::placeholder {
+                  color: #999999;
+                  opacity: 1;
+                  transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1);
+                }
+                .secondsSearch:focus::placeholder {
+                  opacity: 0;
+                }
+              `}</style>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         <BottomNav
