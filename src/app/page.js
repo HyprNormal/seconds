@@ -112,7 +112,10 @@ function Poster({ src, country }) {
           src={src}
           alt=""
           fill
-          sizes="(max-width: 480px) 33vw, 140px"
+          // Keep the exact same layout box; only hint smaller effective size.
+          sizes="(max-width: 480px) 34vw, 160px"
+          quality={55}
+          loading="lazy"
           style={{ objectFit: "cover", objectPosition: "center" }}
         />
       </motion.div>
@@ -413,6 +416,8 @@ function FilmResultCard({ film }) {
           alt=""
           fill
           sizes="48px"
+          quality={45}
+          loading="lazy"
           style={{ objectFit: "cover", objectPosition: "center" }}
         />
       </div>
@@ -661,9 +666,7 @@ export default function Home() {
   const SEARCH_TOP = 24;
   const SEARCH_H = 48;
 
-  const HEADER_TOTAL = `calc(${SAFE_TOP} + ${
-    SAFE_BREATH + LOGO_H + SEARCH_TOP + SEARCH_H
-  }px)`;
+  const HEADER_TOTAL = `calc(${SAFE_TOP} + ${SAFE_BREATH + LOGO_H + SEARCH_TOP + SEARCH_H}px)`;
   const PLATE_EXTEND = 12;
   const HEADER_PLATE_H = `calc(${HEADER_TOTAL} + ${PLATE_EXTEND}px)`;
 
@@ -829,6 +832,7 @@ export default function Home() {
               alt=""
               fill
               priority
+              quality={70}
               sizes="(max-width: 480px) 100vw, 420px"
               style={{
                 objectFit: "cover",
@@ -843,8 +847,7 @@ export default function Home() {
                 position: "absolute",
                 inset: 0,
                 opacity: HERO_GRADIENT_OPACITY,
-                background:
-                  "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
+                background: "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
               }}
             />
           </div>
@@ -965,6 +968,10 @@ export default function Home() {
               src={headerBackdropSrc}
               alt=""
               fill
+              // This is the duplicated hero; make it explicitly non-priority.
+              priority={false}
+              loading="lazy"
+              quality={60}
               sizes="(max-width: 480px) 100vw, 420px"
               style={{
                 objectFit: "cover",
@@ -979,8 +986,7 @@ export default function Home() {
                 position: "absolute",
                 inset: 0,
                 opacity: HERO_GRADIENT_OPACITY,
-                background:
-                  "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
+                background: "linear-gradient(to top, #0D0D0D 0%, rgba(13,13,13,0) 100%)",
               }}
             />
           </div>
